@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>フィットの作成 — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary>スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary aria-current="page">フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting" aria-current="page">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary>お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet">お金</a><a href="/assets">資産</a><a href="/appraise">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a></div></details>
+    <details class="nav-group"><summary>生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary>移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist">流通ミッション</a><a href="/wormhole">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>フィットの作成</h1>
+        <p class="muted">艦とモジュールを選ぶと、PG / CPU・DPS・容量・必要なスキル・購入費をその場で計算します。ゲームにインポートできる形でコピーできます。</p>
+      </div>
+      <div class="actions">
+        <label class="market-field"><span>スキル</span><select id="fb-char"></select></label>
+      </div>
+    </header>
+    <div id="toasts" aria-live="polite"></div>
+
+    <div class="fb-layout">
+      <div class="fb-side">
+        <div class="card">
+          <h3>🚀 艦</h3>
+          <div class="search-wrap">
+            <input id="fb-ship-search" type="search" autocomplete="off" spellcheck="false" placeholder="艦を検索（例: ヴェクサー / Vexor）">
+            <ul id="fb-ship-results" class="results" hidden></ul>
+          </div>
+          <label class="fb-name">フィット名<input id="fb-name" type="text" maxlength="100" placeholder="例: 自作 Vexor"></label>
+        </div>
+        <div class="card">
+          <h3>➕ 追加</h3>
+          <div class="search-wrap">
+            <input id="fb-item-search" type="search" autocomplete="off" spellcheck="false" placeholder="モジュール・リグ・ドローン・弾を検索">
+            <ul id="fb-item-results" class="results" hidden></ul>
+          </div>
+          <p class="muted small-note">モジュールはスロットに、ドローンはドローンベイに、弾などはカーゴに入ります。カーゴの弾は、入るモジュールに自動で装填します。</p>
+        </div>
+        <details class="card">
+          <summary>📥 EFT を読み込む</summary>
+          <textarea id="fb-eft" rows="8" placeholder="[Vexor, 自作]&#10;Drone Damage Amplifier II&#10;..."></textarea>
+          <button class="btn small" type="button" id="fb-import">読み込む</button>
+        </details>
+        <div class="fit-actions">
+          <button class="btn primary" type="button" id="fb-copy">📋 EFT をコピー</button>
+          <button class="btn" type="button" id="fb-save">💾 保存</button>
+          <button class="btn" type="button" id="fb-plan">📋 スキルプラン</button>
+          <button class="btn" type="button" id="fb-t1" title="選んだキャラクターのスキルが足りない装備・ドローン・弾を T1 に替える">🔽 スキル不足を T1 に</button>
+          <button class="btn" type="button" id="fb-meta" title="スキルが足りない装備を、使えるメタ装備（コンパクトなど）の一番良いものに替える">🔽 スキル不足をメタ装備に</button>
+          <button class="btn" type="button" id="fb-undo" hidden>↩ 元に戻す</button>
+          <button class="btn danger" type="button" id="fb-clear">🗑 空にする</button>
+        </div>
+      </div>
+
+      <div class="fb-main">
+        <div id="fb-fit"><div class="card empty-card">左の「艦」で艦を選んでください。</div></div>
+      </div>
+
+      <div class="fb-stats" id="fb-stats"></div>
+    </div>
+  </div>
+  <script src="/static/common.js"></script>
+  <script src="/static/fitcards.js"></script>
+  <script src="/static/fitting.js"></script>
+</body>
+</html>

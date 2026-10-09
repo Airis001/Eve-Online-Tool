@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>マーケット — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary>スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary>フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary aria-current="page">お金</summary><div class="nav-menu"><a href="/market" aria-current="page">マーケット</a><a href="/wallet">お金</a><a href="/assets">資産</a><a href="/appraise">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a></div></details>
+    <details class="nav-group"><summary>生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary>移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist">流通ミッション</a><a href="/wormhole">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>マーケット</h1>
+        <p class="muted">取引拠点の相場の比較と、キャラクターのスキルを加味した転売の判定</p>
+      </div>
+      <div class="actions">
+        <button class="btn" id="reload-btn" type="button">↻ 相場を取り直す</button>
+      </div>
+    </header>
+
+    <div id="toasts" aria-live="polite"></div>
+
+    <section class="market-settings">
+      <div class="card">
+        <h3>比較する場所</h3>
+        <div id="location-checks">読み込み中…</div>
+        <p class="muted small-note" id="structure-note" hidden>
+          プレイヤー建造物（🏰）のマーケットを見るには、キャラクターの <a href="/login">再ログイン</a> が必要です。</p>
+      </div>
+      <div class="card">
+        <h3>取引の条件</h3>
+        <label class="market-field"><span>キャラクター</span><select id="trade-char"></select></label>
+        <div id="fee-summary" class="fee-summary"></div>
+        <details class="fee-settings">
+          <summary>手数料の設定</summary>
+          <div class="fee-grid">
+            <label>売上税の基本値（%）<input type="number" step="0.01" min="0" data-fee="baseTax"></label>
+            <label>Accounting 1 レベルごとの軽減（%）<input type="number" step="0.1" min="0" data-fee="accountingPerLevel"></label>
+            <label>仲介手数料の基本値（%）<input type="number" step="0.01" min="0" data-fee="baseBroker"></label>
+            <label>Broker Relations 1 レベルごとの軽減（ポイント）<input type="number" step="0.01" min="0" data-fee="brokerPerLevel"></label>
+            <label>プレイヤー建造物の仲介手数料（%・空欄なら NPC と同じ）<input type="number" step="0.01" min="0" data-fee="structureBroker"></label>
+          </div>
+          <p class="muted small-note">初期値は EVE のスキル説明によるものです（売上税 7.5%・Accounting で 11% ずつ軽減、仲介手数料 3%・Broker Relations で 0.3 ポイントずつ軽減）。
+            NPC ステーションでは、キャラクターのスタンディング（Connections・Diplomacy を加味）による仲介手数料の軽減も反映します。<button class="link" type="button" id="fee-reset">初期値に戻す</button></p>
+        </details>
+      </div>
+    </section>
+
+    <section>
+      <h2>相場の比較</h2>
+      <div class="search-wrap">
+        <input id="item-search" type="search" autocomplete="off" spellcheck="false" placeholder="比較リストに追加するアイテムを検索（例: トリタニウム / plex / heavy missile launcher II）">
+        <ul id="item-results" class="results" role="listbox" hidden></ul>
+      </div>
+      <div id="compare" class="compare"></div>
+    </section>
+
+    <section>
+      <h2>転売の判定</h2>
+      <p class="muted small-note">1 個あたりの利益（手数料を引いた後）。「即売り」は安い売り注文から買って、別の場所の買い注文にすぐ売る場合。
+        「出品」は買ったあと、売り先で最安値と同じ価格で売り注文を出す場合。「ステーション内」は同じ場所で買い注文・売り注文を出す場合（最良価格で約定したと仮定）。
+        注文の少ない場所では価格差が大きく出ますが、実際には約定しにくいので、注文件数も見て判断してください。</p>
+      <div id="trades"></div>
+    </section>
+
+    <section>
+      <div class="section-head"><h2>🧾 自分の注文</h2><button class="btn small" type="button" id="orders-reload">↻ 取り直す</button></div>
+      <p class="muted small-note">全キャラクターの出品中の注文と、同じ場所で他人により安い売り注文（高い買い注文）が出ていないか。期限が近い注文も出します。</p>
+      <div id="my-orders"><p class="muted">読み込み中…</p></div>
+    </section>
+
+    <section>
+      <h2>🛡 保険</h2>
+      <div class="search-wrap">
+        <input id="ins-search" type="search" autocomplete="off" spellcheck="false" placeholder="艦を検索（例: ドミニックス / Tengu）">
+        <ul id="ins-results" class="results" hidden></ul>
+      </div>
+      <div id="insurance"></div>
+    </section>
+
+    <section id="detail-section" hidden>
+      <h2>注文一覧</h2>
+      <div class="card" id="detail"></div>
+    </section>
+
+    <footer>ESI の注文データは約 5 分ごとに更新されます。価格は各場所の最良価格（売りは最安・買いは最高）です。</footer>
+  </div>
+  <script src="/static/common.js"></script>
+  <script src="/static/market.js"></script>
+</body>
+</html>

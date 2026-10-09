@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>スキルチェッカー — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary aria-current="page">スキル</summary><div class="nav-menu"><a href="/skills" aria-current="page">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary>フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary>お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet">お金</a><a href="/assets">資産</a><a href="/appraise">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a></div></details>
+    <details class="nav-group"><summary>生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary>移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist">流通ミッション</a><a href="/wormhole">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>EVE スキルチェッカー</h1>
+        <p class="muted" id="summary">読み込み中…</p>
+      </div>
+      <div class="actions">
+        <button class="btn" id="boost-btn" type="button">🧠 ブースト</button>
+        <button class="btn" id="refresh-btn" type="button">↻ 最新に更新</button>
+        <a class="btn primary" href="/login">＋ キャラクター追加</a>
+      </div>
+    </header>
+
+    <div id="toasts" aria-live="polite"></div>
+    <div id="filter-bar" class="filter-bar card" hidden></div>
+    <div id="alerts"></div>
+    <div id="catalog-banner" class="banner" hidden></div>
+
+    <section class="search-box">
+      <label for="search" class="search-label">艦・装備を検索</label>
+      <div class="search-wrap">
+        <input id="search" type="search" autocomplete="off" spellcheck="false"
+               placeholder="例: ドレイク / ishtar / heavy missile launcher / へびー">
+        <ul id="search-results" class="results" role="listbox" hidden></ul>
+      </div>
+    </section>
+
+    <section id="preview" class="card preview" hidden></section>
+
+    <section>
+      <h2>チェックリスト</h2>
+      <div id="checklist"></div>
+    </section>
+
+    <section>
+      <h2>フィッティング</h2>
+      <details class="card eft-box" id="eft-box">
+        <summary>EFT 形式を貼り付けて判定（Pyfa・zKillboard などからコピー）</summary>
+        <textarea id="eft-input" rows="8" spellcheck="false" placeholder="[Drake, PvE Drake]
+Ballistic Control System II
+Large Shield Extender II
+Heavy Missile Launcher II, Scourge Heavy Missile
+Hobgoblin II x5"></textarea>
+        <div class="actions"><button class="btn primary small" type="button" id="eft-check-btn">判定する</button></div>
+        <div id="eft-result"></div>
+      </details>
+      <div id="fittings"></div>
+    </section>
+
+    <section id="market-section">
+      <h2>購入費の計算に使う場所</h2>
+      <div class="card market-box">
+        <label class="market-field"><span>場所</span>
+          <select id="market-location"><option>読み込み中…</option></select></label>
+        <p class="muted small-note" id="market-structure-note" hidden>
+          プレイヤー建造物（🏰）のマーケットを見るには、キャラクターの <a href="/login">再ログイン</a> が必要です（マーケットの権限を許可するため）。</p>
+        <p class="muted small-note">スキルブック・フィット・スキルインジェクターの購入費を、ここで選んだ場所の最安値で計算します。
+          相場の比較や転売の判定は <a href="/market">マーケット</a> のページで行えます。</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>キャラクター</h2>
+      <div id="char-tabs" class="tabs" role="tablist"></div>
+      <div id="char-panel"></div>
+    </section>
+
+    <footer>
+      訓練時間は Omega クローン・現在の属性値での見積もりです（Alpha は約 2 倍）。加速器・インプラントの効果は「🧠 ブースト」で試算できます。
+      <button class="link" id="rebuild-btn" type="button">艦・装備の名前一覧を作り直す</button>
+    </footer>
+  </div>
+
+  <dialog id="boost-dialog" class="plan-dialog">
+    <div id="boost-body" class="dialog-body"></div>
+  </dialog>
+
+  <dialog id="plan-dialog" class="plan-dialog">
+    <div id="plan-body"></div>
+  </dialog>
+
+  <script src="/static/common.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

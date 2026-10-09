@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>お金 — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary>スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary>フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary aria-current="page">お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet" aria-current="page">お金</a><a href="/assets">資産</a><a href="/appraise">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a></div></details>
+    <details class="nav-group"><summary>生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary>移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist">流通ミッション</a><a href="/wormhole">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>お金</h1>
+        <p class="muted">ウォレットの残高・収支、転売の実績、契約、LP の換金、コーポレーション</p>
+      </div>
+      <div class="actions"><select id="days"><option value="7">7 日</option><option value="30" selected>30 日</option></select>
+        <button class="btn" type="button" id="reload">↻ 取り直す</button></div>
+    </header>
+    <div id="toasts" aria-live="polite"></div>
+    <div class="card char-filter" id="char-filter"></div>
+
+    <section>
+      <h2>💰 残高と収支</h2>
+      <div id="summary"><p class="muted">読み込み中…</p></div>
+    </section>
+
+    <section>
+      <h2>📈 転売の実績</h2>
+      <p class="muted small-note">期間内の売買から、品目ごとに「売った数 ×（平均売値 − 平均買値）」を計算しています。期間より前に買ったものは仕入れ値が分からないため含めません。手数料・税は実際の支払い額（期間内の合計）です。</p>
+      <div id="trades"><p class="muted">読み込み中…</p></div>
+    </section>
+
+    <section>
+      <h2>📜 契約</h2>
+      <div id="contracts"><p class="muted">読み込み中…</p></div>
+    </section>
+
+    <section>
+      <h2>🎖 LP の換金</h2>
+      <p class="muted small-note">LP ストアの交換品を Jita 4-4 の価格で換算し、1 LP あたりの ISK が高い順に並べます（交換に必要な ISK・アイテムの代金を引いた後）。取引量の少ない品目は売れにくいので、マーケットで確認してください。</p>
+      <div id="lp"><p class="muted">読み込み中…</p></div>
+    </section>
+
+    <section>
+      <h2>🏢 コーポレーション</h2>
+      <p class="muted small-note">コーポの口座には「経理（Accountant）」などの役職、資産には「ディレクター」の役職が必要です。資産の金額は CCP の平均価格による目安です。</p>
+      <div id="corp"><p class="muted">読み込み中…</p></div>
+    </section>
+  </div>
+  <script src="/static/common.js"></script>
+  <script src="/static/wallet.js"></script>
+</body>
+</html>

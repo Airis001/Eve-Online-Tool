@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ワームホール — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary>スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary>フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary>お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet">お金</a><a href="/assets">資産</a><a href="/appraise">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a></div></details>
+    <details class="nav-group"><summary>生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary aria-current="page">移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist">流通ミッション</a><a href="/wormhole" aria-current="page">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>ワームホール</h1>
+        <p class="muted">今いる星系・ワームホールの判別・スキャン結果の整理・通れる艦・穴の潰しの計算</p>
+      </div>
+      <label class="market-field"><span>キャラクター</span><select id="wh-char"></select></label>
+    </header>
+
+    <div id="toasts" aria-live="polite"></div>
+
+    <section>
+      <div class="section-head"><h2>📍 今いる星系</h2><button class="btn small" type="button" id="loc-refresh">↻ 更新</button></div>
+      <div id="locations" class="wh-locations"><p class="muted">読み込み中…</p></div>
+    </section>
+
+    <section>
+      <h2>🌀 ワームホールの判別</h2>
+      <div class="card">
+        <label class="wh-code-field">
+          <span>穴のコード</span>
+          <input id="wh-code" list="wh-codes" placeholder="例: H296、B274、K162" autocomplete="off" spellcheck="false">
+          <datalist id="wh-codes"></datalist>
+        </label>
+        <p class="muted small-note">ゲーム内で穴を選んで「情報を表示」すると、名前に「Wormhole H296」のようなコードが出ます。</p>
+        <div id="wh-result"></div>
+      </div>
+      <details class="wh-all"><summary>すべての穴の一覧</summary>
+        <div class="wh-filter" id="wh-filter"></div>
+        <div class="table-scroll"><table class="orders" id="wh-table"></table></div>
+      </details>
+    </section>
+
+    <section>
+      <h2>🚀 通れる艦</h2>
+      <p class="muted">上で選んだ穴を、キャラクターの艦・フィットが通れるか（hot = アフターバーナー・マイクロワープドライブ起動中）。</p>
+      <div id="pass-body"><p class="muted">穴のコードを入れると判定します。</p></div>
+    </section>
+
+    <section>
+      <h2>💥 穴の潰し（質量の計算）</h2>
+      <div class="card" id="roll-body"><p class="muted">穴のコードを入れると計算できます。</p></div>
+    </section>
+
+    <section>
+      <h2>📡 スキャン結果の整理</h2>
+      <div class="card">
+        <p class="muted small-note">プローブスキャナーの一覧を選択して Ctrl+A → Ctrl+C でコピーし、ここに貼り付けてください。前回の貼り付けと比べて、新しいシグネチャ・消えたシグネチャも出します。</p>
+        <textarea id="scan-input" rows="6" placeholder="ABC-123	Cosmic Signature	Wormhole	Unstable Wormhole	100.0%	4.12 AU"></textarea>
+        <label class="wh-scan-system">スキャンした星系<input type="text" id="scan-system" placeholder="空欄なら現在地" spellcheck="false"></label>
+        <div class="fit-actions"><button class="btn primary" type="button" id="scan-run">整理する</button>
+          <button class="btn" type="button" id="scan-clear">前回の記録を消す</button><span class="muted" id="scan-where"></span></div>
+        <p class="muted small-note">整理すると、星系ごとのシグネチャの数が記録され、<a href="/signals">シグネチャ・星系</a>のページで一覧できます（全キャラクター共通）。</p>
+        <div id="scan-result"></div>
+      </div>
+    </section>
+
+    <footer>
+      穴の行き先・寿命・質量は ESI のデータです。実際の総質量は穴ごとに ±10% ほどばらつくため、潰しの計算は幅で出しています。
+      J 空間の固定の穴（Static）と特殊効果は ESI に無いので、星系名のリンク（anoik.is）で確認してください。
+    </footer>
+  </div>
+
+  <script src="/static/common.js"></script>
+  <script src="/static/wormhole.js"></script>
+</body>
+</html>

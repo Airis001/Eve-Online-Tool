@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>属性の割り振り — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary aria-current="page">スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap" aria-current="page">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary>フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary>お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet">お金</a><a href="/assets">資産</a><a href="/appraise">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a></div></details>
+    <details class="nav-group"><summary>生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary>移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist">流通ミッション</a><a href="/wormhole">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>属性の割り振り（リマップ）</h1>
+        <p class="muted">スキルキューやスキルプランを一番速く訓練できる属性の割り振りと、インプラントを入れたときの効果を計算します</p>
+      </div>
+      <label class="market-field"><span>キャラクター</span><select id="rm-char"></select></label>
+    </header>
+    <div id="toasts" aria-live="polite"></div>
+    <div class="card">
+      <div class="ind-form">
+        <label>対象<select id="rm-mode"><option value="queue">今のスキルキュー（残り）</option><option value="text">スキルプランを貼り付ける</option></select></label>
+        <button class="btn primary" type="button" id="rm-run">計算する</button>
+      </div>
+      <textarea id="rm-text" rows="8" class="big-textarea" hidden placeholder="1 行に「スキル名 レベル」（例: Drones 5 / ドローン V）。スキル一覧・スキルプランのコピーをそのまま貼れます"></textarea>
+    </div>
+    <div id="rm-out"></div>
+  </div>
+  <script src="/static/common.js"></script>
+  <script src="/static/remap.js"></script>
+</body>
+</html>

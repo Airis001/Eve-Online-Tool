@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>生産 — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary>スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary>フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary>お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet">お金</a><a href="/assets">資産</a><a href="/appraise">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a></div></details>
+    <details class="nav-group"><summary aria-current="page">生産</summary><div class="nav-menu"><a href="/industry" aria-current="page">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary>移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist">流通ミッション</a><a href="/wormhole">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>生産</h1>
+        <p class="muted">製造・研究ジョブ、製造コストの計算（作るか買うか）、採掘の記録</p>
+      </div>
+      <div class="actions"><button class="btn" type="button" id="reload">↻ 取り直す</button></div>
+    </header>
+    <div id="toasts" aria-live="polite"></div>
+    <div class="card char-filter" id="char-filter"></div>
+
+    <section>
+      <div class="section-head"><h2>🏭 ジョブ</h2><button class="btn small" type="button" id="notify-btn">🔔 完了をブラウザで通知</button></div>
+      <div id="jobs"><p class="muted">読み込み中…</p></div>
+    </section>
+
+    <section>
+      <h2>🧮 製造コスト</h2>
+      <div class="card">
+        <div class="search-wrap">
+          <input id="bp-search" type="search" autocomplete="off" spellcheck="false" placeholder="作りたい品目を検索（例: ヘビーミサイルランチャー II / Hobgoblin II）">
+          <ul id="bp-results" class="results" hidden></ul>
+        </div>
+        <div class="ind-form">
+          <label>回数<input type="number" id="f-runs" min="1" value="1"></label>
+          <label>ME（材料効率）<input type="number" id="f-me" min="0" max="10" value="10"></label>
+          <label>TE（時間効率）<input type="number" id="f-te" min="0" max="20" value="20"></label>
+          <label>星系（コスト指数）<input type="text" id="f-system" placeholder="例: Jita" value="Jita"></label>
+          <label>施設の税（%）<input type="number" id="f-tax" step="0.01" min="0" value="0.25"></label>
+          <label>施設の材料軽減（%）<input type="number" id="f-bonus" step="0.1" min="0" value="0"></label>
+          <label>スキル<select id="f-char"></select></label>
+        </div>
+        <div id="cost"><p class="muted">品目を検索するか、下の「持っている設計図」から選んでください。</p></div>
+      </div>
+      <details class="card my-bps"><summary>📘 持っている設計図</summary><div id="bps"><p class="muted">開くと読み込みます。</p></div></details>
+    </section>
+
+    <section>
+      <h2>🤝 トレード × 生産の損益</h2>
+      <p class="muted small-note">生産キャラクターが作り、材料はコーポの資産にある分を使って足りない分をトレードキャラクターが Jita で買い、
+        製品をトレードキャラクターが Jita で売ったときに利益が出るかを判定します。品目を指定しなければ、生産キャラクターの持っている設計図をすべて調べます。</p>
+      <div class="card">
+        <div class="ind-form">
+          <label>トレード（売買）<select id="tb-trader"></select></label>
+          <label>生産<select id="tb-maker"></select></label>
+          <label>材料の買い方<select id="tb-buy"><option value="sell">売り注文から買う（すぐ・手数料なし）</option><option value="buy">買い注文を出す（安い・仲介手数料）</option></select></label>
+          <label>製品の売り方<select id="tb-sell"><option value="sell">売り注文を出す（高い・税＋仲介手数料）</option><option value="buy">買い注文に売る（すぐ・税のみ）</option></select></label>
+          <label>回数<input type="number" id="tb-runs" min="1" placeholder="自動"></label>
+          <label>星系（コスト指数）<input type="text" id="tb-system" value="Jita"></label>
+          <label>施設の税（%）<input type="number" id="tb-tax" step="0.01" min="0" value="0.25"></label>
+          <label>ME（不明なとき）<input type="number" id="tb-me" min="0" max="10" value="10"></label>
+          <label>TE（不明なとき）<input type="number" id="tb-te" min="0" max="20" value="20"></label>
+          <label class="check-label"><input type="checkbox" id="tb-corp" checked> コーポの資産を使う</label>
+          <label class="check-label"><input type="checkbox" id="tb-corpbp" checked> コーポの設計図も使う</label>
+          <label>資産の場所<select id="tb-location"><option value="">すべての場所</option></select></label>
+        </div>
+        <div class="search-wrap">
+          <input id="tb-search" type="search" autocomplete="off" spellcheck="false" placeholder="品目を指定（空欄なら生産キャラクター・コーポの設計図をすべて）">
+          <ul id="tb-results" class="results" hidden></ul>
+        </div>
+        <div class="fit-actions"><span id="tb-item" class="muted">品目: 生産キャラクター・コーポの設計図すべて</span>
+          <button class="btn primary" type="button" id="tb-run">損益を計算する</button></div>
+        <div id="tb-out"></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>⛏ 採掘の記録（30 日）</h2>
+      <p class="muted small-note">金額は Jita 4-4 の買い値（すぐ売れる価格）で計算しています。</p>
+      <div id="mining"><p class="muted">読み込み中…</p></div>
+    </section>
+  </div>
+  <script src="/static/common.js"></script>
+  <script src="/static/industry.js"></script>
+</body>
+</html>

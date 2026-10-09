@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/" aria-current="page">ホーム</a>
+    <details class="nav-group"><summary>スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary>フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary>お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet">お金</a><a href="/assets">資産</a><a href="/appraise">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a></div></details>
+    <details class="nav-group"><summary>生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary>移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist">流通ミッション</a><a href="/wormhole">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>EVE ツール</h1>
+        <p class="muted"><span id="summary">読み込み中…</span> <span id="server-status"></span></p>
+      </div>
+      <div class="actions">
+        <a class="btn" href="/account" id="account-link" hidden></a>
+        <a class="btn primary" href="/login">＋ キャラクター追加</a>
+      </div>
+    </header>
+
+    <div id="toasts" aria-live="polite"></div>
+    <section class="card todo-card">
+      <div class="section-head"><h2>✅ やることリスト</h2>
+        <span class="fit-actions"><button class="btn small" type="button" id="todo-notify">🔔 通知を許可</button>
+          <button class="btn small" type="button" id="todo-reload">↻ 更新</button></span></div>
+      <div id="todo"><p class="muted">全キャラクターの状況を調べています…（初回は少し時間がかかります）</p></div>
+      <p class="muted small-note">スキルキュー・生産ジョブ・マーケットの注文・契約・PI の抽出機・クローンジャンプを調べます。このページを開いている間は 10 分ごとに調べ直し、新しい項目をブラウザで通知します。</p>
+    </section>
+
+    <section class="home-cards">
+      <a class="home-card" href="/skills">
+        <span class="home-icon">🎓</span>
+        <h2>スキルチェッカー</h2>
+        <p>艦・装備・フィットを使えるかの判定、不足スキルと訓練時間、スキルプラン、PG / CPU・容量、購入費。</p>
+        <span class="home-stat" id="skills-stat"></span>
+      </a>
+      <a class="home-card" href="/recommend">
+        <span class="home-icon">🛠️</span>
+        <h2>おすすめフィット</h2>
+        <p>キャラクターごとに、今のスキルで使えるフィットと、10 日以内の訓練で使える・強化できるフィット。DPS の目安・容量付き。</p>
+        <span class="home-stat">ドローン・ミサイル・輸送・採掘</span>
+      </a>
+      <a class="home-card" href="/pve">
+        <span class="home-icon">🤖</span>
+        <h2>PvE フィット</h2>
+        <p>ミッション・アノマリなど NPC 相手の戦闘向けのおすすめフィット（ドローン・ミサイル・タレット艦）。DPS の目安と強化の訓練付き。</p>
+        <span class="home-stat">NPC 相手</span>
+      </a>
+      <a class="home-card" href="/pvp">
+        <span class="home-icon">⚔️</span>
+        <h2>PvP フィット</h2>
+        <p>プレイヤー相手の戦闘向けのおすすめフィット（タックル・ブローラー・カイト・ロジ・ステルスボマー）。速さ・ワープ妨害の射程・回復量付き。</p>
+        <span class="home-stat">プレイヤー相手</span>
+      </a>
+      <a class="home-card" href="/ships">
+        <span class="home-icon">🚀</span>
+        <h2>おすすめ艦船</h2>
+        <p>キャラクターごとに、今乗れる艦と 10 日以内の訓練で乗れる艦を、役割ごとに艦の格の順で。</p>
+        <span class="home-stat">全艦船から判定</span>
+      </a>
+      <a class="home-card" href="/market">
+        <span class="home-icon">📈</span>
+        <h2>マーケット</h2>
+        <p>主要な取引拠点の相場の比較と、会計スキルなどを加味した転売の判定（即売り・出品・ステーション内トレード）。</p>
+        <span class="home-stat" id="market-stat"></span>
+      </a>
+      <a class="home-card" href="/wormhole">
+        <span class="home-icon">🌀</span>
+        <h2>ワームホール</h2>
+        <p>キャラクターの今いる星系、穴のコードから行き先・寿命・質量、通れる艦の判定、穴の潰しの計算、スキャン結果の整理。</p>
+        <span class="home-stat">J 空間・K 空間</span>
+      </a>
+      <a class="home-card" href="/skilllist">
+        <span class="home-icon">📜</span>
+        <h2>スキル一覧</h2>
+        <p>選んだキャラクターの全スキルをグループごとに一覧表示。テキスト・表計算用・「英語名 レベル」の形でコピーできます。</p>
+        <span class="home-stat">習得済み・訓練キュー・未注入</span>
+      </a>
+      <a class="home-card" href="/fitting">
+        <span class="home-icon">🔧</span>
+        <h2>フィットの作成</h2>
+        <p>艦とモジュールを選んで自分でフィットを組み、PG / CPU・DPS・容量・ワープコアの強度・必要なスキル・購入費をその場で確認。EFT でコピー・保存。</p>
+        <span class="home-stat">おすすめのフィットからも「✏️ 編集」で開けます</span>
+      </a>
+      <a class="home-card" href="/signals">
+        <span class="home-icon">📡</span>
+        <h2>シグネチャ・星系</h2>
+        <p>自分たちのスキャンで見つけたシグネチャの数（星系ごと・種類ごと）、Thera・Turnur の繋がり（EVE-Scout）、星系の撃墜数・ジャンプ数、インカージョン。</p>
+        <span class="home-stat">探査・移動の下調べ</span>
+      </a>
+      <a class="home-card" href="/assets">
+        <span class="home-icon">📦</span>
+        <h2>資産</h2>
+        <p>全キャラクターの持ち物を検索（どのキャラの、どこに、何があるか）。場所ごとの合計額。</p>
+        <span class="home-stat">資産の検索</span>
+      </a>
+      <a class="home-card" href="/appraise">
+        <span class="home-icon">🏷️</span>
+        <h2>査定</h2>
+        <p>インベントリや契約の中身を貼り付けて、Jita の売値・買値で合計額と体積を出す。</p>
+        <span class="home-stat">貼り付けるだけ</span>
+      </a>
+      <a class="home-card" href="/intel">
+        <span class="home-icon">🛰️</span>
+        <h2>情報（ローカル・D-Scan・撃墜）</h2>
+        <p>ローカルのパイロットの危険度、D-Scan の艦の構成、星系の最近の撃墜（キャンプの確認）。</p>
+        <span class="home-stat">PvP・移動の安全確認</span>
+      </a>
+      <a class="home-card" href="/compare">
+        <span class="home-icon">⚖️</span>
+        <h2>フィットの比較</h2>
+        <p>2〜3 個のフィットを並べて、DPS・速さ・PG / CPU・容量・訓練時間・購入費を比べる。</p>
+        <span class="home-stat">カードの「⚖ 比較」から追加</span>
+      </a>
+      <a class="home-card" href="/remap">
+        <span class="home-icon">🧠</span>
+        <h2>属性の割り振り</h2>
+        <p>スキルキュー・スキルプランを一番速く訓練できる属性の割り振りと、インプラントの効果。</p>
+        <span class="home-stat">リマップの計算</span>
+      </a>
+      <a class="home-card" href="/trade">
+        <span class="home-icon">💹</span>
+        <h2>ステーション内トレード</h2>
+        <p>Jita 4-4 で買い注文・売り注文の差が大きく、手数料込みで利益が出る品目を探す。</p>
+        <span class="home-stat">取引量つき</span>
+      </a>
+      <a class="home-card" href="/dist">
+        <span class="home-icon">📦</span>
+        <h2>流通ミッション</h2>
+        <p>近くの流通エージェントを探し、受注して回る順番と、配達先をすべて回る一筆書きのルートを出す。</p>
+        <span class="home-stat">ハイセクのみ・ゲームに設定</span>
+      </a>
+      <a class="home-card" href="/haul">
+        <span class="home-icon">🚚</span>
+        <h2>ハブ間の転売</h2>
+        <p>Jita などの交易ハブで買って、別のハブで売ると利益が出る品目。安全なルートのローセクの有無と、オートパイロットの時間つき。</p>
+        <span class="home-stat">価格・取引量つき</span>
+      </a>
+      <a class="home-card" href="/nes">
+        <span class="home-icon">💎</span>
+        <h2>PLEX とストア</h2>
+        <p>ニューエデンストアの商品（バンドル含む）を PLEX で買って売るのと、PLEX をそのまま売るのとで、どちらが得かを比べる。</p>
+        <span class="home-stat">1 PLEX あたりの ISK</span>
+      </a>
+      <a class="home-card" href="/wallet">
+        <span class="home-icon">💰</span>
+        <h2>お金</h2>
+        <p>全キャラクターの残高と収支の推移、転売の実績（利益）、契約、LP の換金、コーポレーションの口座・資産。</p>
+        <span class="home-stat">ウォレット・LP・契約</span>
+      </a>
+      <a class="home-card" href="/industry">
+        <span class="home-icon">🏭</span>
+        <h2>生産</h2>
+        <p>製造・研究ジョブの完了時刻と通知、設計図からの製造コスト（作るか買うか）、採掘の記録。</p>
+        <span class="home-stat">ジョブ・製造・採掘</span>
+      </a>
+      <a class="home-card" href="/pi">
+        <span class="home-icon">🪐</span>
+        <h2>PI（惑星開発）</h2>
+        <p>全キャラクターのコロニーと抽出機の期限。余っている材料・足りない材料から、どのキャラのどの惑星を何に回すと製品が最大になるかを計算。</p>
+        <span class="home-stat">バランスの提案</span>
+      </a>
+      <a class="home-card" href="/travel">
+        <span class="home-icon">🗺</span>
+        <h2>移動</h2>
+        <p>ルートと途中の危険度（直近の撃墜数）、ゲームの目的地の設定、ジャンプクローン・ジャンプ疲労。</p>
+        <span class="home-stat">ルート・クローン</span>
+      </a>
+    </section>
+
+    <section>
+      <h2>キャラクター</h2>
+      <div id="characters"></div>
+    </section>
+  </div>
+  <script src="/static/common.js"></script>
+  <script src="/static/home.js"></script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>査定 — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary>スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary>フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary aria-current="page">お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet">お金</a><a href="/assets">資産</a><a href="/appraise" aria-current="page">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a></div></details>
+    <details class="nav-group"><summary>生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary>移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist">流通ミッション</a><a href="/wormhole">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>査定</h1>
+        <p class="muted">ゲームのインベントリ・契約の中身・フィットなどを貼り付けると、Jita 4-4 の価格で合計額を出します</p>
+      </div>
+    </header>
+    <div id="toasts" aria-live="polite"></div>
+    <div class="card">
+      <textarea id="ap-text" rows="10" class="big-textarea" placeholder="インベントリで Ctrl+A → Ctrl+C して貼り付け（「名前 x数量」「数量 名前」、EFT 形式も読めます）"></textarea>
+      <div class="fit-actions"><button class="btn primary" type="button" id="ap-run">査定する</button>
+        <button class="btn" type="button" id="ap-copy">📋 結果をコピー</button></div>
+    </div>
+    <div id="ap-out"></div>
+
+    <section>
+      <h2>🚀 今の艦のカーゴを売る</h2>
+      <div class="card">
+        <div class="ind-form">
+          <label>艦に乗っているキャラクター<select id="cs-char"></select></label>
+          <label>売る場所<select id="cs-loc"></select></label>
+          <button class="btn primary" type="button" id="cs-run">計算する</button>
+          <button class="btn" type="button" id="cs-force" title="ESI から取り直す">↻ 取り直す</button>
+        </div>
+        <p class="muted small-note">選んだキャラクターが今乗っている艦のカーゴ（専用カーゴを含む）の中身を、トレードスキル（Broker Relations・Accounting）が一番高いキャラクターが売ったときの金額です。
+          出品価格は、最安の売り注文より 0.01 ISK 安い値です。カーゴの中身は ESI の資産の情報で、ゲームの状態より最大 1 時間ほど遅れることがあります（最新の中身は上の「査定」に貼り付けてください）。</p>
+      </div>
+      <div id="cs-out"></div>
+    </section>
+  </div>
+  <script src="/static/common.js"></script>
+  <script src="/static/appraise.js"></script>
+</body>
+</html>

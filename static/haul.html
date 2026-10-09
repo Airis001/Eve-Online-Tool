@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ハブ間の転売 — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary>スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary>フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary aria-current="page">お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet">お金</a><a href="/assets">資産</a><a href="/appraise">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul" aria-current="page">ハブ間の転売</a><a href="/nes">PLEX とストア</a></div></details>
+    <details class="nav-group"><summary>生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary>移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist">流通ミッション</a><a href="/wormhole">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>ハブ間の転売</h1>
+        <p class="muted">交易ハブで売り注文から買い、別のハブで売ると手数料込みで利益が出る品目と、そのあいだの安全なルート</p>
+      </div>
+      <div class="actions" id="game-char"></div>
+    </header>
+    <div id="toasts" aria-live="polite"></div>
+    <div class="card">
+      <div class="ind-form">
+        <label>仕入れ先<select id="hl-src"></select></label>
+        <label>売り先<select id="hl-dst"></select></label>
+        <label>最低価格（ISK）<input type="number" id="hl-min-price" value="100000" min="0" step="1000"></label>
+        <label>最低の利益率（%）<input type="number" id="hl-min-margin" value="10" min="0" step="1"></label>
+        <label>カーゴ（m³）<input type="number" id="hl-cargo" placeholder="例: 5000" min="0" step="100"></label>
+        <label>艦（オートパイロットの時間）<input type="text" id="hl-ship" placeholder="空欄 = 今乗っている艦"></label>
+        <label>ルート<select id="hl-flag"></select></label>
+        <label id="hl-maxlow-label">ローセク<select id="hl-maxlow"></select></label>
+        <label id="hl-minsec-label">通る星系のセキュリティ<select id="hl-minsec"></select></label>
+        <button class="btn primary" type="button" id="hl-run">探す</button>
+      </div>
+      <p class="muted small-note">2 つの地域の全注文を読み込むので、1〜3 分かかります（結果は 15 分ほど使い回せます）。手数料は、トレードスキルが一番高いキャラクターが売り先で売る場合です。
+        艦を空欄にすると、🎮 で選んだキャラクターが今乗っている艦でオートパイロットの時間を見積もります。</p>
+    </div>
+    <div id="hl-route"></div>
+    <div id="hl-out"></div>
+  </div>
+  <script src="/static/common.js"></script>
+  <script src="/static/haul.js"></script>
+</body>
+</html>

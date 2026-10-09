@@ -1,0 +1,20 @@
+# チェックしたい艦・装備を 1 行に 1 つ書きます（英語名または日本語名の完全一致）
+# [カテゴリ名] の行で見出しを付けられます。# 以降はコメントです。
+
+[艦船]
+Drake
+Ishtar
+Gila
+Tengu
+
+[武器]
+Heavy Missile Launcher II
+Heavy Assault Missile Launcher II
+
+[ドローン]
+Hobgoblin II
+Hammerhead II
+
+[防御]
+Large Shield Extender II
+Multispectrum Shield Hardener II

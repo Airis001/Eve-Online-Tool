@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>資産 — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary>スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary>フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary aria-current="page">お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet">お金</a><a href="/assets" aria-current="page">資産</a><a href="/appraise">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a></div></details>
+    <details class="nav-group"><summary>生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary>移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist">流通ミッション</a><a href="/wormhole">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>資産</h1>
+        <p class="muted">全キャラクターの持ち物を 1 か所で検索。「どのキャラクターの、どこに、何があるか」と、場所ごとの合計額</p>
+      </div>
+      <div class="actions"><button class="btn" type="button" id="reload">↻ 取り直す</button></div>
+    </header>
+    <div id="toasts" aria-live="polite"></div>
+    <div class="card char-filter" id="char-filter"></div>
+
+    <div class="card sl-controls">
+      <div class="ind-form">
+        <label>検索<input type="search" id="as-q" placeholder="アイテム名・場所・キャラクター（例: プレックス / Jita / ヴェクサー）"></label>
+        <label>表示<select id="as-view"><option value="items">アイテムごと</option><option value="locations">場所ごと</option></select></label>
+      </div>
+    </div>
+    <div id="as-summary"></div>
+    <div id="as-body"><p class="muted">読み込み中…</p></div>
+    <footer>金額は CCP の平均価格による目安です。艦・コンテナの中のものは、置いてある場所（ステーションなど）にまとめています。</footer>
+  </div>
+  <script src="/static/common.js"></script>
+  <script src="/static/assets.js"></script>
+</body>
+</html>

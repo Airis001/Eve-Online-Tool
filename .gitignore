@@ -1,0 +1,34 @@
+# 認証情報・トークン
+.env
+.eve_token.json
+.eve_tokens.json
+server.env
+desktop.env
+users.json
+users/
+
+# 生成データ
+character_skills.json
+skill_cache.json
+skills/
+
+__pycache__/
+
+# レポート
+report.html
+type_cache.json
+item_catalog.json
+targets.json
+groups.json
+saved_fits.json
+fitting_cache.json
+structure_names.json
+market_watchlist.json
+wormhole_cache.json
+sde_data.json
+.sde_download.zip
+pi_layouts.json
+sig_log.json
+nes_offers.json
+.flask_secret
+gate_checks.json

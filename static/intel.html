@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>情報（ローカル・D-Scan・撃墜） — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary>スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary>フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary>お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet">お金</a><a href="/assets">資産</a><a href="/appraise">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a></div></details>
+    <details class="nav-group"><summary>生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary aria-current="page">移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist">流通ミッション</a><a href="/wormhole">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel" aria-current="page">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>情報（PvP・移動の安全確認）</h1>
+        <p class="muted">ローカルのパイロットの危険度、D-Scan の艦の構成、星系の最近の撃墜（キャンプの確認）</p>
+      </div>
+    </header>
+    <div id="toasts" aria-live="polite"></div>
+
+    <section>
+      <h2>👥 ローカルの危険度</h2>
+      <div class="card">
+        <textarea id="lc-text" rows="6" class="big-textarea" placeholder="ローカルチャットのメンバー一覧を選択（Ctrl+A）してコピー（Ctrl+C）し、貼り付けてください（1 行に 1 人）"></textarea>
+        <div class="fit-actions"><button class="btn primary" type="button" id="lc-run">調べる</button></div>
+        <p class="muted small-note">所属は ESI、撃墜・損失の傾向は zKillboard の公開データです（1 回に 100 人まで詳しく調べます）。</p>
+      </div>
+      <div id="lc-out"></div>
+    </section>
+
+    <section>
+      <h2>📡 D-Scan の整理</h2>
+      <div class="card">
+        <textarea id="ds-text" rows="6" class="big-textarea" placeholder="指向性スキャナーの結果を選択（Ctrl+A）してコピー（Ctrl+C）し、貼り付けてください"></textarea>
+        <div class="fit-actions"><button class="btn primary" type="button" id="ds-run">整理する</button></div>
+      </div>
+      <div id="ds-out"></div>
+    </section>
+
+    <section>
+      <h2>💀 星系の最近の撃墜</h2>
+      <div class="card">
+        <div class="ind-form">
+          <label>星系<input type="text" id="sk-system" placeholder="例: Uedama / Tama"></label>
+          <button class="btn primary" type="button" id="sk-run">調べる</button>
+        </div>
+        <p class="muted small-note">zKillboard の最近の撃墜（最大 50 件）です。直近 1 時間に同じ集団の撃墜が続いていれば「キャンプの可能性」と出します。</p>
+      </div>
+      <div id="sk-out"></div>
+    </section>
+  </div>
+  <script src="/static/common.js"></script>
+  <script src="/static/intel.js"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+# server.env の EVE_PUBLIC_URL（https://ドメイン）で待ち受けて、アプリに渡す
+{$EVE_PUBLIC_URL} {
+	reverse_proxy app:8080
+}

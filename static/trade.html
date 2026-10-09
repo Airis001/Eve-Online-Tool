@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ステーション内トレード — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary>スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary>フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary aria-current="page">お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet">お金</a><a href="/assets">資産</a><a href="/appraise">査定</a><a href="/trade" aria-current="page">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a></div></details>
+    <details class="nav-group"><summary>生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary>移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist">流通ミッション</a><a href="/wormhole">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>ステーション内トレードの候補</h1>
+        <p class="muted">Jita 4-4 で「買い注文で安く買って、売り注文で高く売る」ときに、手数料込みで利益が出る品目を探します</p>
+      </div>
+    </header>
+    <div id="toasts" aria-live="polite"></div>
+    <div class="card">
+      <div class="ind-form">
+        <label>手数料を計算するキャラクター<select id="tr-char"></select></label>
+        <label>最低価格（ISK）<input type="number" id="tr-min-price" value="100000" min="0" step="1000"></label>
+        <label>最低の利益率（%）<input type="number" id="tr-min-margin" value="5" min="0" step="0.5"></label>
+        <button class="btn primary" type="button" id="tr-run">探す</button>
+      </div>
+      <p class="muted small-note">The Forge の全注文を読み込むので、1〜2 分かかります（結果は 15 分ほど使い回せます）。並びは「1 個の利益 × 1 日の取引量の 1 割」の目安です。</p>
+    </div>
+    <div id="tr-out"></div>
+  </div>
+  <script src="/static/common.js"></script>
+  <script src="/static/trade.js"></script>
+</body>
+</html>

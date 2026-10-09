@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>移動 — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary>スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary>フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary>お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet">お金</a><a href="/assets">資産</a><a href="/appraise">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a></div></details>
+    <details class="nav-group"><summary>生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary aria-current="page">移動・情報</summary><div class="nav-menu"><a href="/travel" aria-current="page">移動</a><a href="/dist">流通ミッション</a><a href="/wormhole">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>移動</h1>
+        <p class="muted">ルートと危険度、ゲームの目的地の設定、ジャンプクローン・ジャンプ疲労</p>
+      </div>
+      <div class="actions" id="game-char"></div>
+    </header>
+    <div id="toasts" aria-live="polite"></div>
+
+    <section>
+      <h2>🗺 ルートと危険度</h2>
+      <div class="card">
+        <div class="ind-form">
+          <label>出発地<input type="text" id="r-from" placeholder="星系名（例: Jita）"></label>
+          <label>目的地<input type="text" id="r-to" placeholder="星系名（例: Amarr）"></label>
+          <label>ルート<select id="r-flag"></select></label>
+          <label id="r-maxlow-label">ローセク<select id="r-maxlow"></select></label>
+          <label id="r-minsec-label">通る星系のセキュリティ<select id="r-minsec"></select></label>
+          <label>避ける星系（カンマ区切り）<input type="text" id="r-avoid" placeholder="例: Uedama, Niarja"></label>
+          <label>艦（オートパイロットの時間）<input type="text" id="r-ship" placeholder="空欄 = 今乗っている艦"></label>
+          <button class="btn primary" type="button" id="r-run">ルートを調べる</button>
+        </div>
+        <p class="muted small-note">出発地を空欄にすると、🎮 で選んだキャラクターの現在地から調べます。艦を空欄にすると、そのキャラクターが今乗っている艦でオートパイロットの時間を見積もります。
+          「ローセクを制限した最短」は、選んだセキュリティ以上の星系だけを通る一番短いルートです。「ローセク」で、ローセク（セキュリティの足りない星系）を何か所まで通ってよいかを選べます。
+          セキュリティを 0.6 以上にすると、襲撃の多い 0.5 の星系も避けます（そのときは 0.5 の星系も「足りない星系」として数えます）。ヌルセクは通りません。撃墜数は直近 1 時間のものです。</p>
+        <div id="route"></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>🧬 ジャンプクローン・ジャンプ疲労</h2>
+      <div id="clones"><p class="muted">読み込み中…</p></div>
+    </section>
+  </div>
+  <script src="/static/common.js"></script>
+  <script src="/static/travel.js"></script>
+</body>
+</html>

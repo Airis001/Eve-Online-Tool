@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PI — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary>スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary>フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary>お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet">お金</a><a href="/assets">資産</a><a href="/appraise">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a></div></details>
+    <details class="nav-group"><summary aria-current="page">生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi" aria-current="page">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary>移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist">流通ミッション</a><a href="/wormhole">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>PI（惑星開発）</h1>
+        <p class="muted">絞り込んだキャラクター全員のコロニーをまとめて集計し、余りと不足をなくして製品を最大にする方法を計算します</p>
+      </div>
+      <div class="actions"><button class="btn" type="button" id="reload">↻ 取り直す</button></div>
+    </header>
+    <div id="toasts" aria-live="polite"></div>
+    <div class="card char-filter" id="char-filter"></div>
+
+    <section>
+      <h2>⚖ 生産のバランスと提案</h2>
+      <div class="card pi-controls">
+        <label>拠点の星系<select id="home-system"></select></label>
+        <label>別の星系<input type="text" id="home-input" placeholder="星系名（例: Jita）"></label>
+        <label>抽出惑星 1 つの 1 日の抽出量<input type="number" id="per-planet" min="1000" step="1000" placeholder="自動"></label>
+        <button class="btn primary" type="button" id="plan-run">計算する</button>
+      </div>
+      <div id="plan"><p class="muted">読み込み中…</p></div>
+    </section>
+
+    <section>
+      <h2>🔄 ゼロから配置し直す</h2>
+      <p class="muted small-note">今のコロニー（司令基地）をすべて破棄し、各キャラクターのコロニーの枠（1 + Interplanetary Consolidation）をすべて使って、
+        拠点の星系で一番稼げる配置を計算します。司令基地の性能は各キャラクターの Command Center Upgrades のレベルで計算します。拠点の星系は上の設定を使います。</p>
+      <div class="card pi-controls">
+        <label>作る製品<select id="rd-target"><option value="">自動（1 日の ISK が最大）</option></select></label>
+        <label>価格<select id="rd-price"><option value="sell">Jita の売値（売り注文を出す）</option><option value="buy">Jita の買値（すぐ売る）</option></select></label>
+        <label>ヘッド 1 本の 1 日の抽出量<input type="number" id="rd-head" min="100" step="500" placeholder="自動"></label>
+        <label>抽出プログラムの期間（回収の間隔）<select id="rd-program"><option value="1">1 日</option><option value="2">2 日</option>
+          <option value="3" selected>3 日</option><option value="4">4 日</option><option value="7">7 日</option><option value="14">14 日</option></select></label>
+        <button class="btn primary" type="button" id="rd-run">配置を計算する</button>
+      </div>
+      <div id="redesign"><p class="muted">「配置を計算する」を押してください。</p></div>
+    </section>
+
+    <section>
+      <h2>📍 記録した抽出機の配置</h2>
+      <p class="muted small-note">コロニーを読み込むたびに、エクストラクター（ECU）とヘッドの位置・抽出量を自動で記録します。コロニーを破棄したあとも残るので、
+        作り直すときに実績の良かった配置を参考にできます。図は ECU を中心にしたヘッドの位置（上が北）で、円は各ヘッドの採掘範囲です。</p>
+      <div id="layouts"><p class="muted">読み込み中…</p></div>
+    </section>
+
+    <section>
+      <h2>🪐 コロニー</h2>
+      <div id="colonies"><p class="muted">読み込み中…</p></div>
+    </section>
+
+    <footer>
+      工場の稼働は「材料が届けば満稼働」、抽出量は ESI の値（抽出が進むと少しずつ減ります）で計算しています。
+      キャラクター間で材料を運ぶ前提です。惑星に置ける工場の数（CPU・パワーグリッド）や、輸送・税は考慮していません。
+      新しいコロニーの数は「抽出惑星 1 つの抽出量」を基準にした目安です（初期値は自分の抽出惑星の平均）。
+    </footer>
+  </div>
+  <script src="/static/common.js"></script>
+  <script src="/static/pi.js"></script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>流通ミッション — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary>スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary>フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary>お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet">お金</a><a href="/assets">資産</a><a href="/appraise">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a></div></details>
+    <details class="nav-group"><summary>生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary aria-current="page">移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist" aria-current="page">流通ミッション</a><a href="/wormhole">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>流通ミッション</h1>
+        <p class="muted">近くの流通エージェントを探し、受注して回る順番と、配達先をすべて回る一筆書きのルートを出します</p>
+      </div>
+      <div class="actions" id="game-char"></div>
+    </header>
+    <div id="toasts" aria-live="polite"></div>
+
+    <section>
+      <h2>① エージェントを探す</h2>
+      <div class="card">
+        <div class="ind-form">
+          <label>基準の星系<input type="text" id="ds-system" placeholder="空欄 = 今いる星系" list="ds-system-list"></label>
+          <label>ジャンプ数<select id="ds-jumps"><option>0</option><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></label>
+          <fieldset class="ds-levels"><legend>レベル</legend>
+            <label><input type="checkbox" value="1" checked> L1</label><label><input type="checkbox" value="2" checked> L2</label>
+            <label><input type="checkbox" value="3" checked> L3</label><label><input type="checkbox" value="4" checked> L4</label></fieldset>
+          <label>カーゴ容量（m³）<input type="number" id="ds-cargo" min="0" step="100" placeholder="例: 14000（空欄 = 考えない）"></label>
+          <label>ローセク<select id="ds-maxlow"></select></label>
+          <label>通る星系のセキュリティ<select id="ds-minsec"></select></label>
+          <button class="btn primary" type="button" id="ds-run">探す</button>
+        </div>
+        <p class="muted small-note">基準の星系を空欄にすると、🎮 で選んだキャラクターが今いる星系から探します。ジャンプ数とルートは「ローセク」「通る星系のセキュリティ」の決まりで数えます（初期値はハイセクだけ）。
+          L2 以上のエージェントは、そのコーポレーション（または勢力）へのスタンディングが必要です。</p>
+        <datalist id="ds-system-list"></datalist>
+      </div>
+    </section>
+
+    <section id="ds-agents-section" hidden>
+      <h2>② エージェントを確認して回るルート</h2>
+      <div id="ds-check-route"></div>
+      <h2>③ 受注するエージェントと配達先</h2>
+      <p class="muted small-note">エージェントを回りながら、受注したら「受注」に印を付けて、配達先の星系を入れてください（入力はこのブラウザーに残ります）。
+        別の場所で荷物を受け取るミッション（回収）は「受取場所」にその星系を入れてください。空欄なら受注場所（エージェントのいる星系）で受け取ります。
+        ①でカーゴ容量を入れたときは、荷物の体積（ミッションの画面に出る m³）も入れてください。</p>
+      <div id="ds-agents"></div>
+      <div class="fit-actions"><button class="btn primary" type="button" id="ds-pickup">受注ルートを計算</button>
+        <button class="btn" type="button" id="ds-clear">受注と配達先をすべて消す</button></div>
+      <div id="ds-pickup-route"></div>
+    </section>
+
+    <section id="ds-delivery-section" hidden>
+      <h2>④ 受取と配達のルート（一筆書き）</h2>
+      <div class="fit-actions"><button class="btn primary" type="button" id="ds-delivery">配達ルートを計算</button></div>
+      <div id="ds-delivery-route"></div>
+      <div class="card" id="ds-reroute" hidden>
+        <h3>⚡ 割り込み・現在地から計算し直す</h3>
+        <p class="muted small-note">ルートを進めながら、済んだ受取・配達に印を付けてください（配達済みの荷物は計算から外れます）。
+          途中で急ぎのミッション（ストーリーラインなど）が来たら下に入れて、「現在地から計算し直す」を押すと、残りの荷物と合わせて今いる場所からのルートを出し直します。</p>
+        <div class="ind-form">
+          <label>ミッション名<input type="text" id="ds-new-label" placeholder="例: ストーリーライン"></label>
+          <label>受取場所<input type="text" id="ds-new-pickup" list="ds-system-list" placeholder="空欄 = 受け取り済み（今カーゴにある）"></label>
+          <label>配達先<input type="text" id="ds-new-dest" list="ds-system-list" placeholder="配達先の星系"></label>
+          <label>体積（m³）<input type="number" id="ds-new-volume" min="0" step="any" placeholder="m³"></label>
+          <label class="ds-take"><input type="checkbox" id="ds-new-urgent" checked> 緊急</label>
+          <button class="btn" type="button" id="ds-new-add">＋ 追加</button>
+        </div>
+        <div id="ds-trip-list"></div>
+        <div class="ind-form">
+          <label>現在地<input type="text" id="ds-here" list="ds-system-list" placeholder="空欄 = 今いる星系（🎮）"></label>
+          <button class="btn primary" type="button" id="ds-reroute-run">現在地から計算し直す</button>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script src="/static/common.js"></script>
+  <script src="/static/dist.js"></script>
+</body>
+</html>

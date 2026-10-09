@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PvE フィット — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body data-purpose="pve">
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary>スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary aria-current="page">フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve" aria-current="page">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary>お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet">お金</a><a href="/assets">資産</a><a href="/appraise">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a></div></details>
+    <details class="nav-group"><summary>生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary>移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist">流通ミッション</a><a href="/wormhole">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>PvE フィット</h1>
+        <p class="muted">ミッション・アノマリ・インカージョンなど NPC 相手の戦闘向け（ドローン・ミサイル・タレット艦）。今のスキルで使えるフィットと、10 日以内の訓練で使える・強化できるフィット</p>
+      </div>
+      <div class="actions"><label class="check-label wcs-label"><input type="checkbox" id="wcs-toggle"> 🛡 スクランブル強度を上げた FIT も表示</label>
+        <label class="market-field"><span>キャラクター</span><select id="rec-char"></select></label></div>
+    </header>
+
+    <div id="toasts" aria-live="polite"></div>
+    <div id="rec-note"></div>
+    <nav class="role-tabs" id="role-tabs"></nav>
+    <div id="rec-body"><p class="muted">読み込み中…</p></div>
+
+    <footer>
+      DPS は目安です（主要なスキル・艦ボーナス・ダメージ強化モジュールを反映し、命中・射程・相手の耐性・装填時間は含みません）。NPC 相手を想定し、推進はアフターバーナー中心・耐性と回復を重視した構成です。
+    </footer>
+  </div>
+  <script src="/static/common.js"></script>
+  <script src="/static/fitcards.js"></script>
+  <script src="/static/recommend.js"></script>
+</body>
+</html>

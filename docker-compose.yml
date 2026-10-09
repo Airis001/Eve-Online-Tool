@@ -1,0 +1,30 @@
+# VPS（ConoHa など）で動かすための設定。手順は DEPLOY_CONOHA.md
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    # .env = EVE の Client ID / Secret Key、server.env = 公開 URL とページを開くパスワード
+    env_file:
+      - .env
+      - server.env
+    # キャラクターのログイン情報・保存したフィットなどを置くフォルダー（作り直しても消えない）
+    volumes:
+      - ./data:/data
+
+  # HTTPS の受け口。証明書は自動で取得・更新される
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    env_file:
+      - server.env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - app
+
+volumes:
+  caddy_data:

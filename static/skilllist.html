@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>スキル一覧 — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary aria-current="page">スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist" aria-current="page">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary>フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary>お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet">お金</a><a href="/assets">資産</a><a href="/appraise">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a></div></details>
+    <details class="nav-group"><summary>生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary>移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist">流通ミッション</a><a href="/wormhole">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>スキル一覧</h1>
+        <p class="muted">選んだキャラクターの全スキルを、グループごとに一覧にしてコピーできます</p>
+      </div>
+      <label class="market-field"><span>キャラクター</span><select id="sl-char"></select></label>
+    </header>
+    <div id="toasts" aria-live="polite"></div>
+
+    <div class="card sl-controls">
+      <div class="ind-form">
+        <label>表示<select id="sl-show"><option value="trained">習得済みのスキル</option><option value="all">未注入のスキルも含む</option><option value="missing">未注入のスキルだけ</option></select></label>
+        <label>名前<select id="sl-lang"><option value="ja">日本語</option><option value="en">英語</option><option value="both">日本語＋英語</option></select></label>
+        <label>並び<select id="sl-sort"><option value="group">グループ順</option><option value="level">レベルの高い順</option><option value="sp">SP の多い順</option><option value="name">名前順</option></select></label>
+        <label>絞り込み<input type="search" id="sl-filter" placeholder="スキル名・グループ名"></label>
+      </div>
+      <div class="fit-actions">
+        <button class="btn primary" type="button" data-copy="text">📋 一覧をコピー（テキスト）</button>
+        <button class="btn" type="button" data-copy="tsv">📋 表計算用にコピー（タブ区切り）</button>
+        <button class="btn" type="button" data-copy="plan">📋 「英語名 レベル」でコピー</button>
+      </div>
+      <p class="muted small-note">「英語名 レベル」は、スキルプランの取り込み（ゲーム内・EVEMon など）に使える形式です（1 行に 1 スキル）。コピーするのは、いま表示している（絞り込んだ）スキルです。</p>
+    </div>
+
+    <div id="sl-summary"></div>
+    <div id="sl-body"><p class="muted">読み込み中…</p></div>
+  </div>
+  <script src="/static/common.js"></script>
+  <script src="/static/skilllist.js"></script>
+</body>
+</html>

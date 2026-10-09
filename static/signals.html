@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>シグネチャ・星系 — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary>スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary>フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary>お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet">お金</a><a href="/assets">資産</a><a href="/appraise">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a></div></details>
+    <details class="nav-group"><summary>生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary aria-current="page">移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist">流通ミッション</a><a href="/wormhole">ワームホール</a><a href="/signals" aria-current="page">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>シグネチャ・星系</h1>
+        <p class="muted">自分たちのスキャンで見つけたシグネチャの数、Thera・Turnur の繋がり、星系ごとの活動（撃墜数・ジャンプ数）とインカージョン</p>
+      </div>
+      <div class="actions" id="game-char"></div>
+    </header>
+    <div id="toasts" aria-live="polite"></div>
+
+    <section>
+      <div class="section-head"><h2>📡 記録したシグネチャ</h2><button class="btn small" type="button" id="sig-reload">↻ 更新</button></div>
+      <p class="muted small-note">ワームホールのページの「スキャン結果の整理」に貼り付けるたびに記録されます（全キャラクター共通）。シグネチャの数は、スキャンした時点のものです。</p>
+      <div class="ind-form">
+        <label>種類<select id="sig-kind"><option value="">すべて</option><option value="wormhole">ワームホール</option><option value="data">データ</option>
+          <option value="relic">レリック</option><option value="gas">ガス</option><option value="ore">鉱石</option><option value="combat">戦闘</option></select></label>
+        <label>期間<select id="sig-days"><option value="1">1 日</option><option value="3">3 日</option><option value="7" selected>7 日</option><option value="30">30 日</option></select></label>
+        <label>並び<select id="sig-sort"><option value="at">新しい順</option><option value="count">多い順</option></select></label>
+      </div>
+      <div id="sigs"><p class="muted">読み込み中…</p></div>
+    </section>
+
+    <section>
+      <div class="section-head"><h2>🌀 Thera・Turnur の繋がり</h2><button class="btn small" type="button" id="scout-reload">↻ 更新</button></div>
+      <p class="muted small-note">有志団体 EVE-Scout が公開している、Thera・Turnur から開いているワームホールです。出発地を入れると、出口の星系（K 空間）までのジャンプ数も出します。</p>
+      <div class="ind-form">
+        <label>出発地<input type="text" id="scout-from" placeholder="空欄なら 🎮 のキャラクターの現在地"></label>
+        <label>大きさ<select id="scout-size"><option value="">すべて</option><option value="medium">巡洋艦以上</option><option value="large">戦艦以上</option></select></label>
+        <label>行き先<select id="scout-kind"><option value="">すべて</option><option value="highsec">ハイセク</option><option value="lowsec">ローセク</option><option value="nullsec">ヌルセク</option><option value="wormhole">J 空間</option></select></label>
+        <button class="btn primary" type="button" id="scout-run">調べる</button>
+      </div>
+      <div id="scout"><p class="muted">読み込み中…</p></div>
+    </section>
+
+    <section>
+      <h2>📊 星系の活動</h2>
+      <p class="muted small-note">ESI の直近 1 時間の集計です。NPC 撃墜数が多い＝ラッティング（NPC 狩り）が多い、ジャンプ数・艦の撃墜数が少ない＝人が少ない、の目安になります。</p>
+      <div class="ind-form">
+        <label>地域<select id="act-region"><option value="">すべて</option></select></label>
+        <label>セキュリティ<select id="act-sec"><option value="all">すべて</option><option value="high">ハイセク</option><option value="low">ローセク</option><option value="null">ヌルセク</option><option value="wh">J 空間</option></select></label>
+        <label>並び<select id="act-sort"><option value="npc">NPC 撃墜の多い順</option><option value="ship">艦の撃墜の多い順</option><option value="jumps_desc">ジャンプ数の多い順</option><option value="quiet">静かな順（撃墜・ジャンプが少ない）</option></select></label>
+        <label>件数<select id="act-limit"><option>50</option><option>100</option><option>200</option></select></label>
+      </div>
+      <div id="activity"><p class="muted">読み込み中…</p></div>
+    </section>
+
+    <section>
+      <h2>👾 インカージョン</h2>
+      <div id="incursions"><p class="muted">読み込み中…</p></div>
+    </section>
+
+    <footer>シグネチャの数は、ゲーム内でスキャンしないと分からないため、全宇宙の数は調べられません。記録は自分たちが貼り付けたスキャン結果だけです。</footer>
+  </div>
+  <script src="/static/common.js"></script>
+  <script src="/static/signals.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+# ログイン情報はコンテナに入れない（Fly.io の secrets と、永続ディスクに置く）
+.env
+.eve_token.json
+.eve_tokens.json
+.flask_secret
+server.env
+data/
+users.json
+users/
+
+.git
+__pycache__/
+*.pyc
+report.html
+.sde_download.zip
+sde.zip
+Dockerfile
+fly.toml
+docker-compose.yml
+Caddyfile
+gate_checks.json
