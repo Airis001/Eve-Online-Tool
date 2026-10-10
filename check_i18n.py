@@ -1,7 +1,8 @@
-"""英語訳の辞書（static/i18n/en.json）を検証する。
+"""訳の辞書（static/i18n/<言語>.json）を検証する。
 
-  py check_i18n.py            足りない訳・{0} などの数のちがい・使われていない訳を表示
-  py check_i18n.py --missing  足りない訳だけを JSON（{"日本語": ""}）で表示（辞書に足す下書き用）
+  py check_i18n.py            全言語の足りない訳・{0} などの数やタグのちがい・使われていない訳を表示
+  py check_i18n.py --missing  英語で足りない訳だけを JSON（{"日本語": ""}）で表示（辞書に足す下書き用）
+  py check_i18n.py --missing de   ほかの言語で足りない訳を {"日本語": "英語訳"} で表示
 
 集める文言:
   - JS・Python の tr("…") の 1 つ目の引数
@@ -23,6 +24,7 @@ JS_TR = re.compile(r'\btr\(\s*"((?:\\.|[^"\\])*)"')
 PLACEHOLDER = re.compile(r"\{(\d+)[^}]*\}")
 EFT_HEAD = re.compile(r"\[[^,\]]+, ([^\]]+)\]")
 TAG = re.compile(r"</?[a-zA-Z][a-zA-Z0-9]*")
+KANA = re.compile(r"[぀-ヿ]")  # ひらがな・カタカナ（訳に残っていたら訳し忘れ）
 # コマンドで使うだけのファイル（画面には出ない）
 CLI_ONLY = {"check_i18n.py", "validate_templates.py", "build_exe.py", "report.py", "i18n.py"}
 
@@ -104,25 +106,45 @@ def html_text_keys(html):
     return [k for k in found if k and i18n.JP.search(k)]
 
 
+def check_table(language, table, used):
+    """1 言語分の問題を表示し、足りない訳の数を返す。"""
+    missing = [k for k in used if not table.get(k)]
+    for key in missing:
+        print(f"[{language}] 訳なし  {used[key]}  {json.dumps(key, ensure_ascii=False) if chr(10) in key else key}")
+    for key, text in table.items():
+        if not text:
+            continue
+        if sorted(set(PLACEHOLDER.findall(key))) != sorted(set(PLACEHOLDER.findall(text))):
+            print(f"[{language}] {{}}の数  {key}  →  {text}")
+        if sorted(TAG.findall(key)) != sorted(TAG.findall(text)):
+            print(f"[{language}] タグのちがい  {key}  →  {text}")
+        # 訳を見出しと同じにしたもの（記号だけなど）は意図どおり。中国語は漢字を使うので調べない
+        if language != "zh" and text != key and KANA.search(text):
+            print(f"[{language}] 日本語が残る  {key}  →  {text}")
+    return len(missing)
+
+
 def main():
     sys.stdout.reconfigure(encoding="utf-8")
-    table = i18n.en_dict()
     used = {**targets_keys(), **html_keys(), **py_keys(), **js_keys()}
-    missing = {k: v for k, v in used.items() if not table.get(k)}
+    en = i18n.en_dict()
     if "--missing" in sys.argv:
-        print(json.dumps({k: "" for k in missing}, ensure_ascii=False, indent=1))
+        rest = sys.argv[sys.argv.index("--missing") + 1:]
+        if rest:
+            table = i18n._dict_file(rest[0])
+            print(json.dumps({k: en.get(k, "") for k in used if not table.get(k)}, ensure_ascii=False, indent=1))
+        else:
+            print(json.dumps({k: "" for k in used if not en.get(k)}, ensure_ascii=False, indent=1))
         return
-    for key, where in missing.items():
-        print(f"訳なし  {where}  {json.dumps(key, ensure_ascii=False) if chr(10) in key else key}")
-    for key, en in table.items():
-        if en and sorted(set(PLACEHOLDER.findall(key))) != sorted(set(PLACEHOLDER.findall(en))):
-            print(f"{{}}の数  {key}  →  {en}")
-        if en and sorted(TAG.findall(key)) != sorted(TAG.findall(en)):
-            print(f"タグのちがい  {key}  →  {en}")
-        if en and en != key and i18n.JP.search(en):  # 訳を見出しと同じにしたもの（「日本語」の切り替えなど）は意図どおり
-            print(f"日本語が残る  {key}  →  {en}")
-    unused = [k for k in table if k not in used]
-    print(f"文言 {len(used)} 件 · 訳なし {len(missing)} 件 · 辞書だけにある {len(unused)} 件（サーバーの値など、使われ方で必要なものもある）")
+    summary = []
+    for language in i18n.LANGS:
+        if language == "ja":
+            continue
+        table = i18n._dict_file(language)
+        missing = check_table(language, table, used)
+        summary.append(f"{language} {len(table)} 件（訳なし {missing}）")
+    unused = [k for k in en if k not in used]
+    print(f"文言 {len(used)} 件 · " + " · ".join(summary) + f" · 英語の辞書だけにある {len(unused)} 件（サーバーの値など、使われ方で必要なものもある）")
 
 
 if __name__ == "__main__":

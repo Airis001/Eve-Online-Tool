@@ -3,6 +3,7 @@
   - 設計図の材料・製品・時間（製造・リアクション）
   - PI（惑星開発）のレシピと、惑星の種類ごとの資源（P0）
   - 上記に出てくるアイテムの日本語名・英語名
+  - 公開されている全アイテムの、日本語・英語以外の名前（画面の言語に合わせて名前を出すため）
 
 SDE は約 100MB の zip なので、初回（または更新ボタン）のときだけダウンロードし、必要な部分を取り出したら消す。
 """
@@ -21,7 +22,9 @@ from paths import DATA_DIR
 DATA_FILE = DATA_DIR / "sde_data.json"
 TMP_ZIP = DATA_DIR / ".sde_download.zip"
 SDE_URL = "https://developers.eveonline.com/static-data/eve-online-static-data-latest-jsonl.zip"
-DATA_VERSION = 7  # 6: ゲート（星系のつながりと位置）、7: エージェント・ステーションの星系・NPC コーポの名前
+DATA_VERSION = 8  # 6: ゲート（星系のつながりと位置）、7: エージェント・ステーションの星系・NPC コーポの名前、8: ほかの言語の名前
+# 日本語・英語のほかに名前を取り出す言語（SDE の name のキー）
+LOC_LANGS = ("de", "fr", "es", "ru", "ko", "zh")
 # 残すエージェント: 部門（流通・採掘・セキュリティ）と種類（ふつうのエージェント・CONCORD）
 AGENT_DIVISIONS = {22: "distribution", 23: "mining", 24: "security"}
 AGENT_TYPES = {2, 5}
@@ -49,8 +52,10 @@ class SdeData:
         self.data = None
         self.gates = {}
         self.agents, self.stations, self.corp_names = {}, {}, {}
+        self.loc_names = {}
         self.outdated = True
         self.status = {"state": "missing", "progress": 0, "error": None}
+        self.on_loaded = []  # 読み込んだとき（作り直したときも）に呼ぶ関数
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
             if OLDEST_USABLE <= raw.get("version", 0) <= DATA_VERSION:
@@ -82,13 +87,21 @@ class SdeData:
         self.agents = {int(k): v for k, v in raw.get("agents", {}).items()}
         self.stations = {int(k): v for k, v in raw.get("stations", {}).items()}
         self.corp_names = {int(k): v for k, v in raw.get("corp_names", {}).items()}
+        # ほかの言語の名前 {言語: {type_id: 名前}}（古い版には無い）
+        self.loc_names = {lang: {int(k): v for k, v in names.items()} for lang, names in raw.get("loc_names", {}).items()}
         self.outdated = raw.get("version") != DATA_VERSION
         self.status = {"state": "ready", "progress": 100, "error": None, "build": raw.get("build"),
                        "release": raw.get("release")}
+        for callback in self.on_loaded:
+            callback()
 
     @property
     def ready(self):
         return self.data is not None
+
+    def localized(self, type_id, language):
+        """日本語・英語以外の言語の名前（分からなければ None）。"""
+        return self.loc_names.get(language, {}).get(type_id) if self.data else None
 
     def name(self, type_id):
         """(日本語名, 英語名)"""
@@ -166,8 +179,14 @@ class SdeData:
         resource_names = {n for names in PLANET_RESOURCES.values() for n in names}
         names, by_en, planet_types, volumes = {}, {}, {}, {}
         meta, children = {}, {}
+        loc_names = {lang: {} for lang in LOC_LANGS}
         for t in rows("types.jsonl"):
             en = t.get("name", {}).get("en")
+            if t.get("published"):
+                for lang in LOC_LANGS:
+                    name = t.get("name", {}).get(lang)
+                    if name and name != en:  # 英語と同じなら持たない（英語名を使う）
+                        loc_names[lang][t["_key"]] = name
             if t.get("published") and t.get("metaGroupID"):
                 meta[t["_key"]] = (t["metaGroupID"], t.get("metaLevel", 0), t["name"].get("ja"), en)
                 if t.get("variationParentTypeID"):
@@ -230,6 +249,6 @@ class SdeData:
             "blueprints": blueprints, "product_bp": product_bp, "schematics": schematics, "names": names,
             "volumes": volumes, "planet_types": planet_types, "pi_tiers": tiers, "npc_factions": npc_factions,
             "systems": systems, "regions": regions, "variants": variants, "gates": gates,
-            "agents": agents, "stations": stations, "corp_names": corp_names,
+            "agents": agents, "stations": stations, "corp_names": corp_names, "loc_names": loc_names,
             "planet_resources": {k: [by_en[n] for n in v] for k, v in PLANET_RESOURCES.items()},
         }

@@ -133,7 +133,7 @@ async function loadActivity() {
   }
   if (!regionsLoaded) {
     const cur = $("#act-region").value;
-    $("#act-region").innerHTML = `<option value="">${tr("すべて")}</option>` + d.regions.map((r) => `<option value="${r.id}">${LANG === "en" ? esc(r.name) : tr("{0}（{1}）", esc(r.name_ja || r.name), esc(r.name))}</option>`).join("");
+    $("#act-region").innerHTML = `<option value="">${tr("すべて")}</option>` + d.regions.map((r) => `<option value="${r.id}">${LANG !== "ja" ? esc(r.name) : tr("{0}（{1}）", esc(r.name_ja || r.name), esc(r.name))}</option>`).join("");
     $("#act-region").value = cur;
     regionsLoaded = true;
   }

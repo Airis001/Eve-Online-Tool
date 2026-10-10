@@ -34,7 +34,7 @@ async function loadSystems() {
     if (ja) systemIds.set(ja.toLowerCase(), id);
     systemNames.set(id, en);
   }
-  $("#ds-system-list").innerHTML = d.systems.map(([, en, ja, sec]) => `<option value="${esc(en)}">${LANG === "en" ? "" : esc(ja || "")} ${sec.toFixed(1)}</option>`).join("");
+  $("#ds-system-list").innerHTML = d.systems.map(([, en, ja, sec]) => `<option value="${esc(en)}">${LANG !== "ja" ? "" : esc(ja || "")} ${sec.toFixed(1)}</option>`).join("");
 }
 
 async function currentSystemName() {
@@ -69,7 +69,7 @@ function actionHtml(a, d) {
 
 // 回る順番とルートの表示（②③④で共有）。④は星系ごとに受取・配達する荷物も出す
 function tourHtml(d, title) {
-  const stops = d.stops.map((s, i) => `<li>${secBadge(s)} <b>${esc(s.name)}</b>${s.ja && LANG !== "en" ? ` <small class="muted">${esc(s.ja)}</small>` : ""}
+  const stops = d.stops.map((s, i) => `<li>${secBadge(s)} <b>${esc(s.name)}</b>${s.ja && LANG === "ja" ? ` <small class="muted">${esc(s.ja)}</small>` : ""}
     <small class="muted">${tr("{0} {1} ジャンプ", i ? tr("前から") : tr("出発から"), s.jumps)}</small>
     ${s.actions ? `<div class="ds-actions">${s.actions.map((a) => actionHtml(a, d)).join("<br>")}
       ${d.capacity ? `<div class="small-note muted">${tr("ここを出るときの積載 <b>{0}</b> / {1} m³", fmtNum(s.load), fmtNum(d.capacity))}</div>` : ""}</div>` : ""}</li>`).join("");

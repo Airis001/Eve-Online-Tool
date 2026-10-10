@@ -65,11 +65,15 @@ TRADE_SKILLS = {"accounting": 16622, "broker_relations": 3446, "advanced_broker_
 INDUSTRY_SKILLS = {"industry": 3380, "advanced_industry": 3388, "mass_production": 3387}
 
 class I18nJSONProvider(DefaultJSONProvider):
-    """API の応答の日本語（カテゴリ名・エラーメッセージなど）を、英語の画面では英語にして返す。"""
+    """API の応答を画面の言語にして返す。
+
+    日本語の値（カテゴリ名・エラーメッセージなど）は訳し、艦・装備の英語名の隣にはその言語の名前（loc）を足す。
+    """
 
     def dumps(self, obj, **kwargs):
-        if i18n.lang() == "en":
-            obj = i18n.translate_data(obj)
+        language = i18n.lang()
+        if language != "ja":
+            obj = i18n.localize_names(i18n.translate_data(obj, i18n.dict_for(language)), language)
         return super().dumps(obj, **kwargs)
 
 
@@ -110,6 +114,18 @@ fitting_data = fitting.FittingData(core.esi_get)
 wormholes = wormhole.WormholeData(core.esi_get)
 universe = wormhole.Universe(core.esi_get)
 sde = sde_data.SdeData()
+
+
+def _use_sde_names():
+    """SDE のほかの言語の名前を、画面の名前と名前一覧の検索に使う（SDE を作り直したときも）。"""
+    catalog.set_extra_names(sde.loc_names)
+
+
+i18n.set_name_lookup(sde.localized)
+sde.on_loaded.append(_use_sde_names)
+if sde.ready:
+    _use_sde_names()
+
 _token_cache = {}  # (アカウント, character_id) → (アクセストークン, 有効期限)
 
 
@@ -205,16 +221,18 @@ def form_page(title, fields, button, message="", footer="", ok=""):
     title, button, site = tr(title), tr(button), tr("EVE ツール")
     note = f'<p class="warn">{escape(message)}</p>' if message else ""
     note += f'<p class="ok-text">{escape(ok)}</p>' if ok else ""
-    other = "en" if language == "ja" else "ja"
-    switch = (f'<p class="muted"><a href="/lang?{urllib.parse.urlencode({"to": other, "next": request.full_path.rstrip("?")})}">'
-              f'🌐 {"English" if other == "en" else "日本語"}</a></p>')
+    back = request.full_path.rstrip("?")
+    switch = '<p class="muted lang-links">🌐 ' + " · ".join(
+        f'<a href="/lang?{urllib.parse.urlencode({"to": code, "next": back})}" lang="{code}">{escape(label)}</a>'
+        for code, label in i18n.LANG_NAMES.items() if code != language) + "</p>"
     html = f"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1"><title>{title} · {site}</title>
 <link rel="stylesheet" href="/static/style.css"></head>
 <body><main class="signin"><div class="card"><h1>{site} · {title}</h1>{note}
 <form method="post">{fields}
-<button class="btn primary" type="submit">{button}</button></form>{footer}{switch}</div></main></body></html>"""
-    return i18n.translate_html(html, language)
+<button class="btn primary" type="submit">{button}</button></form>{footer}<!--lang-links--></div></main></body></html>"""
+    # 言語名はそれぞれの言語のまま出すので、訳したあとに入れる
+    return i18n.translate_html(html, language).replace("<!--lang-links-->", switch)
 
 
 def form_field(label, name, kind="password", autocomplete="off", value="", focus=False):
@@ -516,7 +534,7 @@ def page(name):
     """static/<name>.html を今の言語にして返す（言語の辞書 /i18n.js も読み込ませる）。"""
     language = i18n.lang()
     path = core.BASE_DIR / "static" / f"{name}.html"
-    stamp = (path.stat().st_mtime, i18n.DICT_FILE.stat().st_mtime if i18n.DICT_FILE.exists() else 0)
+    stamp = (path.stat().st_mtime, i18n.dict_stamp(language))
     cached = _page_cache.get((name, language))
     if not cached or cached[0] != stamp:
         html = i18n.translate_html(path.read_text(encoding="utf-8"), language)
@@ -528,10 +546,10 @@ def page(name):
 
 @app.get("/i18n.js")
 def i18n_js():
-    """画面の言語と英語訳の辞書（static/i18n.js の前に入れる）。"""
+    """画面の言語と訳の辞書（static/i18n.js の前に入れる）。"""
     language = i18n.lang()
-    table = i18n.en_dict() if language == "en" else {}
-    head = f"window.LANG = {json.dumps(language)};\nwindow.I18N_DICT = {json.dumps(table, ensure_ascii=False)};\n"
+    head = (f"window.LANG = {json.dumps(language)};\nwindow.LANG_NAMES = {json.dumps(i18n.LANG_NAMES, ensure_ascii=False)};\n"
+            f"window.I18N_DICT = {json.dumps(i18n.dict_for(language), ensure_ascii=False)};\n")
     body = (core.BASE_DIR / "static" / "i18n.js").read_text(encoding="utf-8")
     res = Response(head + body, mimetype="text/javascript")
     res.headers["Cache-Control"] = "no-cache"
@@ -541,7 +559,7 @@ def i18n_js():
 
 @app.get("/lang")
 def switch_lang():
-    """言語を切り替えて、元のページに戻る。?to=ja|en&next=/path"""
+    """言語を切り替えて、元のページに戻る。?to=ja|en|de|…&next=/path"""
     res = redirect(safe_next(request.args.get("next", "/")))
     if request.args.get("to") in i18n.LANGS:
         res.set_cookie(i18n.COOKIE, request.args["to"], max_age=400 * 24 * 3600, samesite="Lax", secure=CLOUD)

@@ -52,6 +52,9 @@ class ItemCatalog:
         self.progress = {"status": "missing", "done": 0, "total": 0, "error": None}
         self.outdated = False  # 古い版の一覧（検索には使えるが、作り直しが必要）
         self._lock = threading.Lock()
+        # ほかの言語の名前（SDE から）: type_id → 検索用の文字、正規化した名前 → type_id
+        self._extra_search = {}
+        self._extra_by_name = {}
         try:
             saved = json.loads(path.read_text(encoding="utf-8"))
         except (FileNotFoundError, json.JSONDecodeError):
@@ -73,6 +76,16 @@ class ItemCatalog:
             self.by_name.setdefault(normalize(item["en"]), item["id"])
             self.by_name.setdefault(normalize(item["ja"]), item["id"])
         self.progress = {"status": "ready", "done": len(items), "total": len(items), "error": None}
+
+    def set_extra_names(self, loc_names):
+        """日本語・英語以外の名前 {言語: {type_id: 名前}} でも検索・名前の照合ができるようにする。"""
+        search, by_name = {}, {}
+        for names in loc_names.values():
+            for type_id, name in names.items():
+                n = normalize(name)
+                search[type_id] = search.get(type_id, "") + "\n" + n
+                by_name.setdefault(n, type_id)
+        self._extra_search, self._extra_by_name = search, by_name
 
     @property
     def ready(self):
@@ -146,7 +159,8 @@ class ItemCatalog:
         q = " ".join(words)
         scored = []
         for item in self.items:
-            if not all(w in item["_search"] for w in words):
+            haystack = item["_search"] + self._extra_search.get(item["id"], "")
+            if not all(w in haystack for w in words):
                 continue
             en, ja = normalize(item["en"]), normalize(item["ja"])
             if q in (en, ja):
@@ -164,8 +178,9 @@ class ItemCatalog:
         return public(item) if item else None
 
     def find_by_name(self, name):
-        """英語名・日本語名の完全一致（大文字小文字・全角半角・ひらがなは区別しない）→ type_id。"""
-        return self.by_name.get(normalize(name))
+        """英語名・日本語名（とほかの言語の名前）の完全一致（大文字小文字・全角半角・ひらがなは区別しない）→ type_id。"""
+        key = normalize(name)
+        return self.by_name.get(key) or self._extra_by_name.get(key)
 
 
 def public(item):
