@@ -11,7 +11,7 @@ Es ist eine Web-App im Browser – auf deinem eigenen PC, als Desktop-App (.exe)
 |---|---|
 | Skills | Skill-Checker (benötigte Skills und Trainingszeit für Schiffe und Module), Skill-Liste, Attributverteilung |
 | Fits | Empfohlene Fits und Schiffe, PvE-/PvP-Fits, Fitting-Tool (PG-, CPU- und DPS-Richtwerte), Fit-Vergleich |
-| ISK | Markt, Wallet, Assets, Schätzung, Stationshandel, Hub-Transport, PLEX & Store |
+| ISK | Markt, Wallet, Assets, Schätzung, Stationshandel, Hub-Transport, PLEX & Store, LP-Auszahlung (ISK/LP und Volumen) |
 | Industrie | Fertigung und Reaktionen, PI (planetare Industrie): Übersicht und Layout-Planung |
 | Reisen & Aufklärung | Sichere Routen und Autopilot-Zeit, Vertriebsmissionen, Wurmlöcher, Signaturen, Local / D-Scan / Abschüsse |
 

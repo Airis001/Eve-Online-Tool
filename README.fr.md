@@ -11,7 +11,7 @@ C'est une application web qui s'ouvre dans le navigateur — sur votre PC, en ap
 |---|---|
 | Compétences | Vérificateur (compétences et temps d'entraînement requis pour vaisseaux et modules), liste des compétences, remap d'attributs |
 | Fits | Fits et vaisseaux recommandés, fits PvE / PvP, outil d'équipement (estimations PG, CPU et DPS), comparaison de fits |
-| ISK | Marché, portefeuille, actifs, estimation, commerce en station, transport entre hubs, PLEX et boutique |
+| ISK | Marché, portefeuille, actifs, estimation, commerce en station, transport entre hubs, PLEX et boutique, conversion des LP (ISK/LP et volume) |
 | Industrie | Fabrication et réactions, PI (industrie planétaire) : totaux et planification des dispositions |
 | Voyage et renseignements | Routes sûres et temps de pilote automatique, missions de distribution, trous de ver, signatures, local / D-Scan / destructions |
 

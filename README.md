@@ -11,7 +11,7 @@ It's a web app that runs in your browser — on your own PC, as a desktop app (.
 |---|---|
 | Skills | Skill checker (skills and training time needed for ships and modules), skill list, attribute remap |
 | Fits | Recommended fits and ships, PvE / PvP fits, fitting tool (PG, CPU and DPS estimates), fit comparison |
-| ISK | Market, wallet, assets, appraisal, station trading, hub hauling, PLEX & store |
+| ISK | Market, wallet, assets, appraisal, station trading, hub hauling, PLEX & store, LP cash-out (ISK/LP and volume) |
 | Industry | Manufacturing and reactions, PI (planetary industry) totals and layout planning |
 | Travel & intel | Safe routes and autopilot time, distribution missions, wormholes, signatures, local / D-Scan / kills |
 

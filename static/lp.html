@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LP の換金 — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary>スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary>フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary aria-current="page">お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet">お金</a><a href="/assets">資産</a><a href="/appraise">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a><a href="/lp" aria-current="page">LP の換金</a></div></details>
+    <details class="nav-group"><summary>生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary>移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist">流通ミッション</a><a href="/wormhole">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>LP の換金</h1>
+        <p class="muted">持っている LP で、LP ストアのどの交換品を交換して売るのが良いかを、1 LP あたりの利益と直近の取引量から選びます</p>
+      </div>
+      <div class="actions"><button class="btn" type="button" id="lp-reload">↻ 取り直す</button></div>
+    </header>
+    <div id="toasts" aria-live="polite"></div>
+    <div class="card char-filter" id="char-filter"></div>
+    <div id="lp-errors"></div>
+
+    <div class="card">
+      <div class="ind-form">
+        <label>コーポレーション<select id="lp-corp"></select></label>
+        <label>使う LP<input type="number" id="lp-points" min="0" step="1000" placeholder="空欄 = 持っている LP"></label>
+        <label>売り先<select id="lp-hub"></select></label>
+        <label>売り方<select id="lp-method">
+          <option value="listed">売り注文を出す（待つ）</option>
+          <option value="instant">買い注文にすぐ売る</option>
+        </select></label>
+        <label>売り切るまでの日数<select id="lp-days">
+          <option value="1">1 日</option><option value="3">3 日</option><option value="7" selected>7 日</option><option value="14">14 日</option><option value="30">30 日</option>
+        </select></label>
+        <label>自分が売れる割合（取引量の %）<input type="number" id="lp-share" value="10" min="1" max="100" step="1"></label>
+        <label>最低の取引量（1 日）<input type="number" id="lp-min-volume" value="1" min="0" step="1"></label>
+      </div>
+      <p class="muted small-note">LP はキャラクターごとに使います（合算はできません）。「使う LP」を空欄にすると、選んだキャラクターがそのコーポで持っている LP の合計で計算します。</p>
+    </div>
+
+    <div id="lp-summary"></div>
+    <section>
+      <h2>🧾 おすすめの交換プラン</h2>
+      <p class="muted small-note">「売り切るまでの日数」のうちに売れる数（売り先の 1 日の取引量 × 自分が売れる割合 × 日数）までを上限に、1 LP あたりの利益が高い順に LP を割り当てます。</p>
+      <div id="lp-plan"><p class="muted">読み込み中…</p></div>
+    </section>
+    <section>
+      <div class="section-head"><h2>📋 交換品の一覧</h2>
+        <label class="muted">並び順 <select id="lp-sort">
+          <option value="score">おすすめ（売れる分で考えた ISK/LP）</option>
+          <option value="per_lp">1 LP あたりの利益</option>
+          <option value="volume">1 日の取引量</option>
+          <option value="orders">1 日の取引件数</option>
+          <option value="total">LP をすべて使ったときの利益</option>
+        </select></label></div>
+      <div id="lp-offers"><p class="muted">読み込み中…</p></div>
+    </section>
+  </div>
+  <script src="/static/common.js"></script>
+  <script src="/static/lp.js"></script>
+</body>
+</html>

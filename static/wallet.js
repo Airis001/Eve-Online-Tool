@@ -86,7 +86,8 @@ function renderLp(d) {
       <td class="r num">${o.daily_volume == null ? "-" : fmtNum(Math.round(o.daily_volume))}${(o.daily_volume || 0) < 1 ? `<br><small class="warn-text">${tr("ほぼ売れない")}</small>` : ""}</td>
       <td class="r num">${fmtNum(o.affordable)}</td>
       <td><a class="btn small" href="/market?type_id=${o.type_id}">🛒</a></td></tr>`).join("");
-    return `<div class="card lp-card"><div class="section-head"><h3>${esc(c.name)}</h3><b>${fmtNum(c.total)} LP</b></div>
+    return `<div class="card lp-card"><div class="section-head"><h3>${esc(c.name)}</h3><span><b>${fmtNum(c.total)} LP</b>
+        <a class="btn small" href="/lp?corp=${c.corporation_id}">${tr("交換プランを見る")}</a></span></div>
       <small class="muted">${c.by_character.map((b) => `${esc(b.character_name)} ${fmtNum(b.points)}`).join(" · ")}</small>
       <div class="table-scroll"><table class="orders"><thead><tr><th>${tr("交換品")}</th><th class="r">${tr("費用")}</th><th class="r">${tr("Jita 売値")}</th>
         <th class="r">ISK / LP<br><small>${tr("売り注文 / 買い注文に売る")}</small></th><th class="r">${tr("1 日の取引量")}<br><small>${tr("7 日平均")}</small></th><th class="r">${tr("交換できる回数")}</th><th></th></tr></thead>
