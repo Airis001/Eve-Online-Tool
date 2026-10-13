@@ -125,7 +125,8 @@ def register(app, ctx):
             prices = ctx.markets.prices(hub["id"], list(ids)) if ids else {}
         except (RuntimeError, requests.RequestException) as e:
             return error(tr("マーケットの取得に失敗しました: {0}", str(e).splitlines()[0]), 502)
-        with ThreadPoolExecutor(max_workers=10) as pool:
+        # マーケットの履歴は 1 分に 300 回ほどまで（ほかのページと合わせて）なので、並列の数は控えめにする
+        with ThreadPoolExecutor(max_workers=4) as pool:
             hist = dict(zip((o["type_id"] for o in cands), pool.map(lambda o: history(hub["region_id"], o["type_id"]), cands)))
 
         trader = best_trader()

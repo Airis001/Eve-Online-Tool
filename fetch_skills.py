@@ -30,6 +30,7 @@ import json
 import os
 import re
 import secrets
+import threading
 import time
 import unicodedata
 import urllib.parse
@@ -363,18 +364,80 @@ def get_access_token(store, credentials, char_id):
 
 # ---------- ESI ----------
 
+# ---------- ESI の利用制限 ----------
+# ESI には 2 つの制限がある（https://developers.eveonline.com/docs/services/esi/rate-limiting/）。
+#   ・ルートのグループごとの制限: 超えると 429 と Retry-After（マーケットの履歴は 1 分に 300 回ほど）
+#   ・エラーの制限: 1 分にエラー（2xx・3xx 以外）が 100 回を超えると、しばらく全部のルートが 420 になる
+# 429 もエラーとして数えられるので、制限にかかったら、同じグループ（420 なら全部）へは送らずに待つ。
+ERROR_LIMIT_MARGIN = 20   # 残りのエラーの回数がこれ以下になったら、窓が終わるまで止める
+RATE_LIMIT_MARGIN = 10    # グループの残りのトークンがこれ以下になったら、少し止める
+MAX_WAIT_SEC = 30         # これより長く待つ必要があれば、送らずにエラーにする
+_limit_lock = threading.Lock()
+_paused_until = {}        # グループ（None = 全部のルート）→ 再開する時刻
+_route_groups = {}        # パスの形（数字を {id} にしたもの）→ グループ
+
+
+def _route_key(path):
+    return re.sub(r"/\d+", "/{id}", path)
+
+
+def _wait_for_limits(path):
+    """制限で止めている間は待つ。長く待つ必要があれば RuntimeError（送ってもエラーが増えるだけなので）。"""
+    with _limit_lock:
+        group = _route_groups.get(_route_key(path))
+        until = max(_paused_until.get(None, 0), _paused_until.get(group, 0) if group else 0)
+    wait = until - time.time()
+    if wait <= 0:
+        return
+    if wait > MAX_WAIT_SEC:
+        raise RuntimeError(tr("ESI の利用制限にかかっています。{0} 秒ほど待ってから、もう一度試してください。", int(wait) + 1))
+    time.sleep(wait)
+
+
+def _int_header(headers, name):
+    try:
+        return int(headers[name])
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def _note_limits(path, res):
+    """応答のヘッダーから制限の残りを読み、足りなければ止める。"""
+    h = res.headers
+    now = time.time()
+    group = h.get("X-Ratelimit-Group")
+    remain = _int_header(h, "X-ESI-Error-Limit-Remain")
+    tokens = _int_header(h, "X-Ratelimit-Remaining")
+
+    def pause(key, seconds):
+        _paused_until[key] = max(_paused_until.get(key, 0), now + seconds)
+    with _limit_lock:
+        if group:
+            _route_groups[_route_key(path)] = group
+        if res.status_code == 420 or (remain is not None and remain <= ERROR_LIMIT_MARGIN):
+            pause(None, (_int_header(h, "X-ESI-Error-Limit-Reset") or 60) + 1)
+        if res.status_code == 429:
+            pause(group, _int_header(h, "Retry-After") or 10)  # グループが分からなければ全部止める
+        elif group and tokens is not None and tokens <= RATE_LIMIT_MARGIN:
+            pause(group, 5)
+
+
 def _esi_request(method, path, retries=3, with_headers=False, **kwargs):
-    """ESI へのリクエスト。一時的なエラー（5xx・通信エラー）は少し待って再試行する。"""
+    """ESI へのリクエスト。一時的なエラー（5xx・通信エラー）と利用制限（420・429）は待って再試行する。"""
     for attempt in range(retries):
+        _wait_for_limits(path)
         try:
             res = SESSION.request(method, f"{ESI_BASE}{path}", timeout=HTTP_TIMEOUT_SEC, **kwargs)
         except requests.RequestException:
             if attempt == retries - 1:
                 raise
         else:
+            _note_limits(path, res)
             if res.ok:
                 body = res.json() if res.content else None  # 204（ゲームの操作など）は本文なし
                 return (body, res.headers) if with_headers else body
+            if res.status_code in (420, 429) and attempt < retries - 1:
+                continue  # 次の回の前に、制限が解けるまで待つ
             if res.status_code < 500 or attempt == retries - 1:
                 raise RuntimeError(tr("ESI エラー ({0}) {1}: {2}", res.status_code, path, res.text))
         time.sleep(1 + attempt * 2)

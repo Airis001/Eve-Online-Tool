@@ -85,6 +85,7 @@
  "EFT 形式でコピー（ゲームのフィッティング画面でインポートできます）": "Copy in EFT format (import it in the game's fitting window)",
  "EFT 形式を貼り付けて判定（Pyfa・zKillboard などからコピー）": "Paste an EFT fit to check it (copy from Pyfa, zKillboard, etc.)",
  "ESI から取り直す": "Fetch again from ESI",
+ "ESI の利用制限にかかっています。{0} 秒ほど待ってから、もう一度試してください。": "ESI rate limit reached. Wait about {0} seconds, then try again.",
  "ESI の注文データは約 5 分ごとに更新されます。価格は各場所の最良価格（売りは最安・買いは最高）です。": "ESI order data updates about every 5 minutes. Prices are the best at each location (lowest sell, highest buy).",
  "ESI の直近 1 時間の集計です。NPC 撃墜数が多い＝ラッティング（NPC 狩り）が多い、ジャンプ数・艦の撃墜数が少ない＝人が少ない、の目安になります。": "ESI totals for the last hour. Many NPC kills suggest lots of ratting; few jumps and ship kills suggest few people around.",
  "ESI エラー ({0}) {1}: {2}": "ESI error ({0}) {1}: {2}",
