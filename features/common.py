@@ -1,5 +1,6 @@
 """追加機能で共通に使うもの（キャラクターの選択・名前の解決・並列取得）。"""
 
+import math
 import threading
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -123,6 +124,14 @@ def jita_prices(ctx, type_ids):
     """Jita 4-4 の {type_id: {"sell": 最安の売り値, "buy": 最高の買い値}}（無ければ None）。"""
     prices = ctx.markets.prices(JITA_STATION_ID, list(type_ids))
     return {t: {"sell": (p["sell"] or {}).get("price"), "buy": (p["buy"] or {}).get("price")} for t, p in prices.items()}
+
+
+def undercut(price):
+    """最安の売り注文のすぐ下の、出品できる価格。注文の価格は有効数字 4 桁まで（最小 0.01 ISK 刻み）。"""
+    if not price or price <= 0.01:
+        return price
+    step = max(10 ** (math.floor(math.log10(price * (1 - 1e-9))) - 3), 0.01)
+    return round((math.ceil(price / step - 1e-9) - 1) * step, 2)
 
 
 def average_prices(ctx):

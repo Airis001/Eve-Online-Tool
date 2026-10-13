@@ -280,7 +280,8 @@ async function showDetail(typeId, locationId = detailLocation || selectedLocatio
         ${gameCharSelect(characters)}<button class="btn small" type="button" data-action="open-game" data-id="${detailItem}">${tr("🎮 ゲームで開く")}</button>
         <button class="icon-btn" type="button" title="${tr("閉じる")}" data-action="close-detail">×</button></span></div>
     <div class="market-summary">
-      <span>${tr("最安の売り <b class=\"sell\">{0}</b>{1}", best.sell ? `${fmtIsk(best.sell.price)} ISK` : tr("なし"), (best.sell ? `${tr("（{0} 個・{1} 件）", fmtNum(best.sell.total_volume), d.sell_count)}` : ""))}</span>
+      <span>${tr("最安の売り <b class=\"sell\">{0}</b>{1}", best.sell ? `${fmtIsk(best.sell.price)} ISK` : tr("なし"), (best.sell ? `${tr("（{0} 個・{1} 件）", fmtNum(best.sell.total_volume), d.sell_count)}` : ""))}
+        ${best.sell ? `<span class="muted">${tr("出品価格")}</span> ${copyPriceButton(undercutPrice(best.sell.price))}` : ""}</span>
       <span>${tr("最高の買い <b class=\"buy\">{0}</b>{1}", best.buy ? `${fmtIsk(best.buy.price)} ISK` : tr("なし"), (best.buy ? `${tr("（{0} 個・{1} 件）", fmtNum(best.buy.total_volume), d.buy_count)}` : ""))}</span>
     </div>
     <div class="cols">

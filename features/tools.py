@@ -17,7 +17,7 @@ from i18n import tr
 from live import EsiForbidden, ScopeMissing, safe
 
 from .common import (JITA_REGION_ID, JITA_STATION_ID, average_prices, error, int_arg, jita_prices, resolve_names,
-                     skill_levels, type_name)
+                     skill_levels, type_name, undercut)
 from .money import standing_reductions
 
 ZKILL = "https://zkillboard.com/api"
@@ -461,8 +461,8 @@ def register(app, ctx):
             p = prices.get(t) or {}
             sell = (p.get("sell") or {}).get("price")
             buy = (p.get("buy") or {}).get("price")
-            # 出品価格: 最安の売り注文より 0.01 ISK 安く（小数の刻みに合わせて）
-            list_price = round(sell - 0.01, 2) if sell else None
+            # 出品価格: 最安の売り注文のすぐ下（価格は有効数字 4 桁まで）
+            list_price = undercut(sell) if sell else None
             list_net = list_price * (1 - (tax + broker) / 100) * qty if list_price else None
             instant_net = buy * (1 - tax / 100) * qty if buy else None
             daily = volumes.get(t)

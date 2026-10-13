@@ -19,9 +19,10 @@ async function run() {
       <div class="stat-card"><small class="muted">${tr("Jita の買値で（すぐ売る）")}</small><b>${fmtIsk(d.buy_total)} ISK</b></div>
       <div class="stat-card"><small class="muted">${tr("体積")}</small><b>${fmtNum(Math.round(d.volume * 10) / 10)} m³</b><small class="muted">${tr("{0} 品目", d.items.length)}</small></div></div>
     ${d.unknown.length ? `<p class="warn-text small-note">${tr("分からなかった名前: {0}", esc(d.unknown.join(LIST_SEP)))}</p>` : ""}
-    <div class="table-scroll"><table class="orders"><thead><tr><th>${tr("アイテム")}</th><th class="r">${tr("数量")}</th><th class="r">${tr("売値")}</th><th class="r">${tr("売値の合計")}</th><th class="r">${tr("買値の合計")}</th><th class="r">${tr("体積")}</th></tr></thead>
+    <div class="table-scroll"><table class="orders"><thead><tr><th>${tr("アイテム")}</th><th class="r">${tr("数量")}</th><th class="r">${tr("売値")}</th><th class="r">${tr("出品価格")}<br><small>${tr("📋 でコピー")}</small></th><th class="r">${tr("売値の合計")}</th><th class="r">${tr("買値の合計")}</th><th class="r">${tr("体積")}</th></tr></thead>
     <tbody>${d.items.map((i) => `<tr><td><b>${esc(nm(i))}</b><br><small class="muted">${nmSub(i)}</small></td><td class="r num">${fmtNum(i.qty)}</td>
-      <td class="r num">${i.sell != null ? fmtIsk(i.sell) : `<span class="warn-text">${tr("なし")}</span>`}</td><td class="r num">${fmtIsk(i.sell_total)}</td>
+      <td class="r num">${i.sell != null ? fmtIsk(i.sell) : `<span class="warn-text">${tr("なし")}</span>`}</td>
+      <td class="r">${i.sell != null ? copyPriceButton(undercutPrice(i.sell)) : "-"}</td><td class="r num">${fmtIsk(i.sell_total)}</td>
       <td class="r num">${fmtIsk(i.buy_total)}</td><td class="r num">${fmtNum(Math.round(i.volume * 10) / 10)} m³</td></tr>`).join("")}</tbody></table></div>`;
 }
 
@@ -44,7 +45,7 @@ async function cargoSale(force = false) {
   if (!d.items.length) { box.innerHTML = head + `<p class="muted">${tr("カーゴは空です。")}</p>`; return; }
   const rows = d.items.map((i) => `<tr><td><b>${esc(nm(i))}</b><br><small class="muted">${nmSub(i)}</small></td>
     <td class="r num">${fmtNum(i.qty)}</td>
-    <td class="r num">${i.list_price != null ? `${fmtIsk(i.list_price)}<br><small class="muted" title="${esc(fullIsk(i.list_price))}">${tr("売り注文 {0} 件", fmtNum(i.sell_orders))}</small>` : `<span class="muted">${tr("売り注文なし")}</span>`}</td>
+    <td class="r num">${i.list_price != null ? `${copyPriceButton(i.list_price)}<br><small class="muted">${tr("売り注文 {0} 件", fmtNum(i.sell_orders))}</small>` : `<span class="muted">${tr("売り注文なし")}</span>`}</td>
     <td class="r num ${i.better === "list" ? "ok-text" : ""}">${i.list_net != null ? fmtIsk(i.list_net) : "-"}</td>
     <td class="r num ${i.better === "instant" ? "ok-text" : ""}">${i.instant_net != null ? fmtIsk(i.instant_net) : "-"}</td>
     <td class="r num">${i.daily_volume != null ? fmtNum(Math.round(i.daily_volume)) : "-"}${i.days_to_sell != null && i.days_to_sell > 1 ? `<br><small class="warn-text">${tr("売り切りまで 約 {0} 日", fmtNum(Math.ceil(i.days_to_sell)))}</small>` : ""}</td></tr>`).join("");

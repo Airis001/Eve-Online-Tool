@@ -43,6 +43,20 @@ const fullIsk = (n) => `${Number(n).toLocaleString(LOCALE, { maximumFractionDigi
 
 const fmtPct = (n, digits = 2) => `${Number(n).toLocaleString(LOCALE, { maximumFractionDigits: digits })}%`;
 
+// 出品できる価格: 注文の価格は有効数字 4 桁まで（最小 0.01 ISK 刻み）。最安の売り注文のすぐ下の価格を返す
+function undercutPrice(price) {
+  if (!price || price <= 0.01) return price;
+  const step = Math.max(10 ** (Math.floor(Math.log10(price * (1 - 1e-9))) - 3), 0.01);
+  return Math.round((Math.ceil(price / step - 1e-9) - 1) * step * 100) / 100;
+}
+
+// 価格をコピーするボタン（ゲームの売却画面の価格欄に貼り付ける）。コピーする文字は区切りなしの数字
+function copyPriceButton(price) {
+  if (price == null) return "";
+  const plain = Number.isInteger(price) ? String(price) : price.toFixed(2).replace(/0$/, "");
+  return `<button class="btn small" type="button" data-copy-price="${plain}" title="${esc(tr("コピーして、ゲームの売却画面の価格欄に貼り付け（Ctrl+V）"))}">📋 ${Number(price).toLocaleString(LOCALE, { maximumFractionDigits: 2 })}</button>`;
+}
+
 // サーバーへのリクエスト（変更系は X-Requested-With が必須）
 async function request(method, url, body) {
   const res = await fetch(url, {
@@ -336,6 +350,17 @@ function gameCharSelect(characters) {
   return `<label class="game-char">🎮 <select data-game-char>${characters.map((c) =>
     `<option value="${c.character_id}" ${c.character_id === chosen ? "selected" : ""}>${esc(c.character_name)}</option>`).join("")}</select></label>`;
 }
+
+document.addEventListener("click", async (ev) => {
+  const btn = ev.target.closest("[data-copy-price]");
+  if (!btn) return;
+  try {
+    await navigator.clipboard.writeText(btn.dataset.copyPrice);
+    toast(tr("{0} ISK をコピーしました。ゲームの売却画面の価格欄に貼り付けてください（Ctrl+V）。", btn.dataset.copyPrice), "ok");
+  } catch (e) {
+    toast(tr("コピーできませんでした: {0}", e.message), "error");
+  }
+});
 
 document.addEventListener("change", (ev) => {
   if (ev.target.matches("[data-game-char]")) {
