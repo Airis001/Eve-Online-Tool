@@ -13,10 +13,10 @@ from flask import jsonify
 from accounts import ThreadPoolExecutor
 from i18n import tr
 from live import EsiForbidden, ScopeMissing, safe
-from market import TRADE_HUBS
+from market import TRADE_HUBS, summarize
 
 from .common import (average_prices, error, int_arg, per_character, resolve_names, selected_characters, skill_levels,
-                     type_name)
+                     type_name, undercut)
 from .money import standing_reductions
 
 SKILL_ACCOUNTING, SKILL_BROKER_RELATIONS = 16622, 3446
@@ -24,6 +24,7 @@ CANDIDATES = 100     # CCP の平均価格で見積もった上位から、実�
 RECENT_DAYS = 7      # 「直近の取引」の日数
 LISTED_LIMIT = 1.5   # 売り値が実際の取引価格（7 日平均）のこの倍より高ければ、その値段では売れない
 INSTANT_LIMIT = 1.3  # 買い値が実際の取引価格のこの倍より高ければ、釣りの買い注文
+INSTANT_DEPTH = 0.95  # すぐ売るときに数える買い注文: 最高の買い値のこの割合以上（それより安い注文に売ると手取りが減る）
 
 
 def register(app, ctx):
@@ -122,7 +123,7 @@ def register(app, ctx):
 
         ids = {o["type_id"] for o in cands} | {i["type_id"] for o in cands for i in o.get("required_items", [])}
         try:
-            prices = ctx.markets.prices(hub["id"], list(ids)) if ids else {}
+            orders = ctx.markets.orders(hub["id"], list(ids)) if ids else {}
         except (RuntimeError, requests.RequestException) as e:
             return error(tr("マーケットの取得に失敗しました: {0}", str(e).splitlines()[0]), 502)
         # マーケットの履歴は 1 分に 300 回ほどまで（ほかのページと合わせて）なので、並列の数は控えめにする
@@ -132,8 +133,14 @@ def register(app, ctx):
         trader = best_trader()
         tax, broker = fees(trader["character_id"], hub["id"]) if trader else (7.5, 3.0)
 
+        prices = {t: summarize(o) for t, o in orders.items()}
+
         def best(t, side):
             return ((prices.get(t) or {}).get(side) or {}).get("price")
+
+        def buy_depth(t, price):
+            """最高の買い値に近い買い注文で、すぐ売れる数。"""
+            return sum(o["volume_remain"] for o in orders.get(t, []) if o["is_buy_order"] and o["price"] >= price * INSTANT_DEPTH)
 
         result = []
         for o in cands:
@@ -150,15 +157,17 @@ def register(app, ctx):
             listed_out = bool(sell and average and sell > average * LISTED_LIMIT)
             instant_out = bool(buy and average and buy > average * INSTANT_LIMIT)
             cost = o.get("isk_cost", 0) + req_cost
-            # 1 回の交換の手取り。売り注文は最安より 0.01 ISK 安く出す（売上税 + 仲介手数料）、すぐ売るは買い注文へ（売上税のみ）
-            listed = (sell - 0.01) * (1 - (tax + broker) / 100) * o["quantity"] - cost if sell and not listed_out else None
+            # 1 回の交換の手取り。売り注文は最安のすぐ下に出す（売上税 + 仲介手数料）、すぐ売るは買い注文へ（売上税のみ）
+            list_price = undercut(sell) if sell else None
+            listed = list_price * (1 - (tax + broker) / 100) * o["quantity"] - cost if sell and not listed_out else None
             instant = buy * (1 - tax / 100) * o["quantity"] - cost if buy and not instant_out else None
             result.append({
                 "offer_id": o["offer_id"], "type_id": t, "ja": ja, "en": en, "quantity": o["quantity"],
                 "lp_cost": o["lp_cost"], "isk_cost": o.get("isk_cost", 0), "required": req,
                 "missing_required": any(i["price"] is None for i in req), "cost": cost,
                 "sell": sell, "buy": buy, "average": average, "listed_out": listed_out, "instant_out": instant_out,
-                "listed": listed, "instant": instant,
+                "list_price": list_price, "listed": listed, "instant": instant,
+                "buy_depth": buy_depth(t, buy) if buy else 0,
                 "volume": h.get("volume"), "orders": h.get("orders"),
             })
         names = resolve_names(ctx, [corp_id])

@@ -2,6 +2,7 @@
 // LP の換金: 持っている LP で、どの交換品を交換して売るのが良いか（1 LP あたりの利益と直近の取引量から）
 
 const LP_KEY = "lp:params";
+const CORP_LP_KEY = "lp:corp-points";  // コーポの LP（手入力）: {LP ストアのコーポ ID: LP}
 let characters = [];
 let groups = [];
 let ids = new Set();
@@ -12,56 +13,106 @@ const num = (sel) => Number($(sel).value) || 0;
 const corpEntry = () => corps.find((c) => c.corporation_id === Number($("#lp-corp").value));
 
 function saveParams() {
-  saveJson(LP_KEY, { corp: Number($("#lp-corp").value) || null, hub: Number($("#lp-hub").value) || null, method: $("#lp-method").value,
+  saveJson(LP_KEY, { corp: Number($("#lp-corp").value) || null, hub: Number($("#lp-hub").value) || null, method: $("#lp-method").value, method_v: 2,
     days: $("#lp-days").value, share: $("#lp-share").value, min_volume: $("#lp-min-volume").value, sort: $("#lp-sort").value });
+  const corpLp = loadJson(CORP_LP_KEY, {}) || {};
+  const value = $("#lp-corp-points").value.trim();
+  if (value) corpLp[$("#lp-corp").value] = value; else delete corpLp[$("#lp-corp").value];
+  saveJson(CORP_LP_KEY, corpLp);
 }
 
-// 使える LP: 「使う LP」の入力があればそれ（1 人分として扱う）、無ければキャラクターごとの LP
+let corpLpParam = new URLSearchParams(location.search).get("corp_lp");
+
+function loadCorpPoints() {
+  $("#lp-corp-points").value = corpLpParam || (loadJson(CORP_LP_KEY, {}) || {})[$("#lp-corp").value] || "";
+  corpLpParam = null;  // URL の値は最初の 1 回だけ使う
+}
+
+// 使える LP: 「使う LP」の入力があればそれ（1 人分として扱う）、無ければキャラクターごとの LP。コーポの LP は別に足す
 function buckets() {
   const manual = $("#lp-points").value.trim();
-  if (manual !== "") return [{ name: null, points: Math.max(Number(manual) || 0, 0) }];
-  return (corpEntry()?.by_character || []).map((b) => ({ name: b.character_name, points: b.points }));
+  const list = manual !== "" ? [{ name: tr("使う LP"), points: Math.max(Number(manual) || 0, 0) }]
+    : (corpEntry()?.by_character || []).map((b) => ({ name: b.character_name, points: b.points }));
+  const corpLp = Math.max(num("#lp-corp-points"), 0);
+  if (corpLp) list.push({ name: tr("コーポ"), points: corpLp, corp: true });
+  return list;
+}
+
+// 交換品の売り方の候補（売り注文・すぐ売る）。cap = その売り方で売れる交換回数の上限
+function optionsFor(o) {
+  const method = $("#lp-method").value;
+  const perDay = (o.volume || 0) * num("#lp-share") / 100;  // 自分が 1 日に売れる数の目安
+  const opts = [];
+  if (method !== "instant" && o.listed != null && (o.volume || 0) >= num("#lp-min-volume")) {
+    opts.push({ kind: "listed", net: o.listed, perLp: o.listed / o.lp_cost, price: o.list_price, perDay,
+      cap: Math.floor(perDay * num("#lp-days") / o.quantity) });
+  }
+  if (method !== "listed" && o.instant != null) {
+    opts.push({ kind: "instant", net: o.instant, perLp: o.instant / o.lp_cost, price: o.buy, cap: Math.floor((o.buy_depth || 0) / o.quantity) });
+  }
+  return opts.sort((a, b) => b.perLp - a.perLp);
 }
 
 // 交換品ごとの数字（売り方・日数・割合で変わる）
 function evaluate(o, lp) {
-  const net = $("#lp-method").value === "instant" ? o.instant : o.listed;
-  const perLp = net != null ? net / o.lp_cost : null;
+  const opts = optionsFor(o);
   const exchanges = lp.reduce((s, b) => s + Math.floor(b.points / o.lp_cost), 0);
-  const perDay = (o.volume || 0) * num("#lp-share") / 100;  // 自分が 1 日に売れる数の目安
-  const sellable = Math.floor(perDay * num("#lp-days") / o.quantity);  // 期間内に売れる交換回数
-  const fraction = exchanges ? Math.min(exchanges, sellable) / exchanges : (sellable >= 1 ? 1 : 0);
-  return { ...o, net, perLp, exchanges, sellable, perDay, score: perLp != null ? perLp * fraction : null,
-    sellDays: perDay > 0 ? exchanges * o.quantity / perDay : null, total: net != null ? net * exchanges : null };
+  // LP をすべてこの交換品に使ったとき: 手取りの高い売り方から、売れる数まで
+  let left = exchanges;
+  let total = null;
+  let sellable = 0;
+  for (const opt of opts) {
+    const k = Math.min(left, opt.cap);
+    total = (total || 0) + k * opt.net;
+    sellable += opt.cap;
+    left -= k;
+  }
+  const top = opts[0];
+  const listed = opts.find((x) => x.kind === "listed");
+  // おすすめ: LP をすべて使ったとき、売れる分だけで考えた 1 LP あたりの利益（売れ残る分は 0 として数える）
+  const score = !top ? null : exchanges ? total / (exchanges * o.lp_cost) : (opts.some((x) => x.cap >= 1) ? top.perLp : 0);
+  return { ...o, opts, exchanges, total, perLp: top?.perLp ?? null, score,
+    sellDays: listed?.perDay > 0 ? exchanges * o.quantity / listed.perDay : null, sellable };
 }
 
-// LP を、1 LP あたりの利益が高い順に、期間内に売れる数まで割り当てる（キャラクターごとに）
+// LP を、1 LP あたりの利益が高い売り方から、売れる数まで割り当てる（キャラクター・コーポごとに）
 function makePlan(items, lp) {
   const left = lp.map((b) => ({ ...b }));
   const plan = [];
-  const usable = items.filter((i) => i.perLp > 0 && !i.missing_required && (i.volume || 0) >= num("#lp-min-volume"))
-    .sort((a, b) => b.perLp - a.perLp);
-  for (const i of usable) {
-    let want = i.sellable;
+  const usable = items.filter((i) => !i.missing_required)
+    .flatMap((i) => i.opts.filter((x) => x.perLp > 0 && x.cap > 0).map((x) => ({ item: i, opt: x })))
+    .sort((a, b) => b.opt.perLp - a.opt.perLp);
+  for (const { item, opt } of usable) {
+    let want = opt.cap;
     const by = [];
     for (const b of left) {
-      const k = Math.min(want, Math.floor(b.points / i.lp_cost));
+      const k = Math.min(want, Math.floor(b.points / item.lp_cost));
       if (k <= 0) continue;
-      b.points -= k * i.lp_cost;
+      b.points -= k * item.lp_cost;
       want -= k;
       by.push({ name: b.name, count: k });
       if (!want) break;
     }
     const count = by.reduce((s, b) => s + b.count, 0);
-    if (count) plan.push({ item: i, count, by, lp: count * i.lp_cost, cost: count * i.cost, profit: count * i.net });
+    if (count) plan.push({ item, opt, count, by, lp: count * item.lp_cost, cost: count * item.cost, profit: count * opt.net });
   }
   return { plan, left: left.reduce((s, b) => s + b.points, 0) };
 }
+
+const methodBadge = (kind) => (kind === "instant" ? `<span class="badge ok">${tr("すぐ売る")}</span>` : `<span class="badge queued">${tr("売り注文")}</span>`);
 
 function priceCell(o) {
   const flag = (out) => (out ? ` <small class="warn-text" title="${esc(tr("実際の取引価格（7 日平均）から大きく外れた注文なので、計算に使いません"))}">⚠</small>` : "");
   return `${o.sell != null ? fmtIsk(o.sell) : "-"}${flag(o.listed_out)}<br><small class="muted">${tr("買 {0}", o.buy != null ? fmtIsk(o.buy) : "-")}${flag(o.instant_out)}</small>
     ${o.average != null ? `<br><small class="muted">${tr("平均 {0}", fmtIsk(o.average))}</small>` : ""}`;
+}
+
+// ゲームで売るときに貼り付ける価格（出品価格・すぐ売る価格）
+function sellPriceCell(o) {
+  const list = o.list_price != null && !o.listed_out ? copyPriceButton(o.list_price) : "-";
+  const instant = o.buy != null && !o.instant_out
+    ? `<br><small class="muted">${tr("すぐ売る {0}", copyPriceButton(o.buy))}</small><br><small class="muted">${tr("買い注文で {0} 個", fmtNum(o.buy_depth || 0))}</small>` : "";
+  return list + instant;
 }
 
 function nameCell(o) {
@@ -77,6 +128,12 @@ function costCell(o) {
 
 const perLpText = (v) => (v == null ? "-" : `<span class="${v > 0 ? "" : "warn-text"}">${fmtNum(Math.round(v))}</span>`);
 
+function perLpCell(o) {
+  const listed = o.listed != null ? o.listed / o.lp_cost : null;
+  const instant = o.instant != null ? o.instant / o.lp_cost : null;
+  return `${tr("売り注文 {0}", `<b>${perLpText(listed)}</b>`)}<br>${tr("すぐ売る {0}", `<b>${perLpText(instant)}</b>`)}`;
+}
+
 function render() {
   if (!store) return;
   saveParams();
@@ -87,8 +144,7 @@ function render() {
   const used = plan.reduce((s, p) => s + p.lp, 0);
   const cost = plan.reduce((s, p) => s + p.cost, 0);
   const profit = plan.reduce((s, p) => s + p.profit, 0);
-  const corp = corpEntry();
-  const holders = corp && $("#lp-points").value.trim() === "" ? corp.by_character.map((b) => `${esc(b.character_name)} ${fmtNum(b.points)}`).join(" · ") : "";
+  const holders = lp.filter((b) => b.name).map((b) => `${esc(b.name)} ${fmtNum(b.points)}`).join(" · ");
 
   $("#lp-summary").innerHTML = `<div class="stat-row">
       <div class="stat-card total"><small class="muted">${tr("使える LP（{0}）", esc(store.name))}</small><b>${fmtNum(totalLp)} LP</b>${holders ? `<small class="muted">${holders}</small>` : ""}</div>
@@ -99,41 +155,43 @@ function render() {
     <p class="muted small-note">${tr("{0} の価格と取引量 · 手数料（{1}）売上税 {2}・仲介手数料 {3} · 交換品 {4} 件のうち、見込みの高い {5} 件を調べました（設計図 {6} 件は除外）", esc(store.hub), esc(store.trader || "-"), fmtPct(store.tax, 2), fmtPct(store.broker, 2), fmtNum(store.total_offers), fmtNum(store.offers.length), fmtNum(store.skipped))}</p>`;
 
   const planRows = plan.map((p) => `<tr><td>${nameCell(p.item)}</td>
+      <td>${methodBadge(p.opt.kind)}<br>${copyPriceButton(p.opt.price)}</td>
       <td class="r num"><b>${fmtNum(p.count)}</b><br><small class="muted">${tr("{0} 個", fmtNum(p.count * p.item.quantity))}</small>${p.by.length > 1 || p.by[0]?.name ? `<br><small class="muted">${p.by.map((b) => `${esc(b.name || "")} ${fmtNum(b.count)}`).join(" · ")}</small>` : ""}</td>
       <td class="r num">${fmtNum(p.lp)} LP${p.cost ? `<br><small class="muted">${fmtIsk(p.cost)} ISK</small>` : ""}</td>
-      <td class="r num">${fmtNum(Math.round(p.item.perLp))}</td>
+      <td class="r num">${fmtNum(Math.round(p.opt.perLp))}</td>
       <td class="r num ok-text"><b>+${fmtIsk(p.profit)}</b></td>
-      <td class="r num">${p.item.perDay > 0 ? tr("{0} 日", fmtNum(Math.ceil(p.count * p.item.quantity / p.item.perDay))) : "-"}</td>
+      <td class="r num">${p.opt.kind === "instant" ? tr("すぐ") : p.opt.perDay > 0 ? tr("{0} 日", fmtNum(Math.ceil(p.count * p.item.quantity / p.opt.perDay))) : "-"}</td>
       <td><a class="btn small" href="/market?type_id=${p.item.type_id}" title="${esc(tr("マーケットで見る"))}">🛒</a></td></tr>`).join("");
   $("#lp-plan").innerHTML = totalLp <= 0
     ? `<p class="muted">${tr("このコーポの LP を持っていません。「使う LP」に数を入れると、その LP で計算します。")}</p>`
-    : `<div class="table-scroll"><table class="orders"><thead><tr><th>${tr("交換品")}</th><th class="r">${tr("交換する回数")}</th><th class="r">${tr("使う LP")}<br><small>${tr("必要な ISK")}</small></th>
+    : `<div class="table-scroll"><table class="orders"><thead><tr><th>${tr("交換品")}</th><th>${tr("売り方")}<br><small>${tr("📋 でコピー")}</small></th><th class="r">${tr("交換する回数")}</th><th class="r">${tr("使う LP")}<br><small>${tr("必要な ISK")}</small></th>
         <th class="r">ISK / LP</th><th class="r">${tr("利益")}</th><th class="r">${tr("売り切るまで")}</th><th></th></tr></thead>
-      <tbody>${planRows || `<tr><td colspan="7" class="muted">${tr("条件に合う交換品がありません")}</td></tr>`}</tbody></table></div>`;
+      <tbody>${planRows || `<tr><td colspan="8" class="muted">${tr("条件に合う交換品がありません")}</td></tr>`}</tbody></table></div>`;
 
   const sortKey = { score: (i) => i.score, per_lp: (i) => i.perLp, volume: (i) => i.volume, orders: (i) => i.orders, total: (i) => i.total }[$("#lp-sort").value];
-  const minVolume = num("#lp-min-volume");
-  const shown = items.filter((i) => (i.volume || 0) >= minVolume)
+  const shown = items.filter((i) => i.opts.length)
     .sort((a, b) => (sortKey(b) ?? -Infinity) - (sortKey(a) ?? -Infinity));
-  const instant = $("#lp-method").value === "instant";
   const rows = shown.map((i) => `<tr><td>${nameCell(i)}</td><td class="r num">${costCell(i)}</td><td class="r num">${priceCell(i)}</td>
-      <td class="r num"><b>${perLpText(i.perLp)}</b><br><small class="muted">${instant ? tr("売り注文 {0}", perLpText(i.listed != null ? i.listed / i.lp_cost : null)) : tr("すぐ売る {0}", perLpText(i.instant != null ? i.instant / i.lp_cost : null))}</small></td>
+      <td class="r num">${sellPriceCell(i)}</td>
+      <td class="r num">${perLpCell(i)}</td>
       <td class="r num">${i.volume != null ? fmtNum(Math.round(i.volume)) : "-"}${(i.volume || 0) < 1 ? `<br><small class="warn-text">${tr("ほぼ売れない")}</small>` : ""}</td>
       <td class="r num">${i.orders != null ? fmtNum(Math.round(i.orders)) : "-"}</td>
       <td class="r num">${fmtNum(i.exchanges)}<br><small class="muted">${i.sellDays != null && i.exchanges ? tr("売り切るまで {0} 日", fmtNum(Math.ceil(i.sellDays))) : ""}</small></td>
       <td class="r num">${i.total != null ? `<span class="${i.total > 0 ? "ok-text" : "warn-text"}">${fmtIsk(i.total)}</span>` : "-"}</td>
       <td><a class="btn small" href="/market?type_id=${i.type_id}" title="${esc(tr("マーケットで見る"))}">🛒</a></td></tr>`).join("");
   $("#lp-offers").innerHTML = `<div class="table-scroll"><table class="orders"><thead><tr><th>${tr("交換品")}</th><th class="r">${tr("費用")}</th><th class="r">${tr("{0} の価格", esc(store.hub))}<br><small>${tr("最安の売り値 / 最高の買い値")}</small></th>
+      <th class="r">${tr("出品価格")}<br><small>${tr("📋 でコピー")}</small></th>
       <th class="r">ISK / LP<br><small>${tr("手数料込み")}</small></th><th class="r">${tr("1 日の取引量")}<br><small>${tr("直近 {0} 日の平均", store.recent_days)}</small></th>
       <th class="r">${tr("1 日の取引件数")}<br><small>${tr("直近 {0} 日の平均", store.recent_days)}</small></th><th class="r">${tr("交換できる回数")}</th>
       <th class="r">${tr("LP をすべて使ったとき")}<br><small>${tr("利益")}</small></th><th></th></tr></thead>
-    <tbody>${rows || `<tr><td colspan="9" class="muted">${tr("条件に合う交換品がありません")}</td></tr>`}</tbody></table></div>
-    <p class="muted small-note">${tr("「売り注文」は最安より 0.01 ISK 安く出品する場合（売上税＋仲介手数料、売れるまで待つ）、「すぐ売る」は買い注文に売る場合（売上税のみ）の、1 LP あたりの利益です。交換に必要な ISK と、必要なアイテムを売り先で買う代金を引いています。取引量・取引件数は売り先の地域の ESI の履歴です（当日の分は翌日に反映されます）。")}</p>`;
+    <tbody>${rows || `<tr><td colspan="10" class="muted">${tr("条件に合う交換品がありません")}</td></tr>`}</tbody></table></div>
+    <p class="muted small-note">${tr("「売り注文」は最安の売り注文のすぐ下（価格の刻みは有効数字 4 桁）に出品する場合（売上税＋仲介手数料、売れるまで待つ）、「すぐ売る」は最高の買い値の 95% 以上の買い注文に売る場合（売上税のみ）の、1 LP あたりの利益です。交換に必要な ISK と、必要なアイテムを売り先で買う代金を引いています。取引量・取引件数は売り先の地域の ESI の履歴です（当日の分は翌日に反映されます）。")}</p>`;
 }
 
 async function loadStore() {
   const corp = Number($("#lp-corp").value);
   store = null;
+  loadCorpPoints();
   if (!corp) {
     $("#lp-summary").innerHTML = "";
     $("#lp-plan").innerHTML = `<p class="muted">${tr("LP を持っていません。")}</p>`;
@@ -180,15 +238,16 @@ $("#lp-corp").addEventListener("change", loadStore);
 $("#lp-hub").addEventListener("change", loadStore);
 $("#lp-reload").addEventListener("click", loadCorps);
 for (const sel of ["#lp-method", "#lp-days", "#lp-sort"]) $(sel).addEventListener("change", render);
-for (const sel of ["#lp-points", "#lp-share", "#lp-min-volume"]) $(sel).addEventListener("input", render);
+for (const sel of ["#lp-points", "#lp-corp-points", "#lp-share", "#lp-min-volume"]) $(sel).addEventListener("input", render);
 
 (async () => {
   const saved = loadJson(LP_KEY, null) || {};
-  const lpParam = new URLSearchParams(location.search).get("lp");
-  if (lpParam) $("#lp-points").value = lpParam;
+  const params = new URLSearchParams(location.search);
+  if (params.get("lp")) $("#lp-points").value = params.get("lp");
   for (const [sel, key] of [["#lp-method", "method"], ["#lp-days", "days"], ["#lp-share", "share"], ["#lp-min-volume", "min_volume"], ["#lp-sort", "sort"]]) {
     if (saved[key] != null) $(sel).value = saved[key];
   }
+  if (saved.method_v !== 2) $("#lp-method").value = "both";  // 「両方」ができる前の設定は、両方にする
   try {
     const d = await request("GET", "/api/characters");
     characters = d.characters;
