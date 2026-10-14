@@ -19,7 +19,7 @@ OUT = ROOT.parent / "EVE-desktop"
 NAME = "EVE Tool"
 WORK = OUT / "build"
 # 一緒に配るファイル（.exe の中では paths.BASE_DIR に置かれ、初回起動時にデータの場所へコピーされる）
-CACHES = ["item_catalog.json", "type_cache.json", "sde_data.json", "fitting_cache.json", "wormhole_cache.json",
+CACHES = ["item_catalog.json", "type_cache.json", "sde_data.json", "sde_missions.json", "fitting_cache.json", "wormhole_cache.json",
           "skill_cache.json", "gate_checks.json"]
 
 

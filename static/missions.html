@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ミッション — EVE ツール</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="site-nav"><div class="site-nav-inner">
+    <a class="brand" href="/">EVE ツール</a>
+    <a href="/">ホーム</a>
+    <details class="nav-group"><summary>スキル</summary><div class="nav-menu"><a href="/skills">スキルチェッカー</a><a href="/skilllist">スキル一覧</a><a href="/remap">属性の割り振り</a></div></details>
+    <details class="nav-group"><summary>フィット</summary><div class="nav-menu"><a href="/recommend">おすすめフィット</a><a href="/pve">PvE フィット</a><a href="/pvp">PvP フィット</a><a href="/ships">おすすめ艦船</a><a href="/fitting">フィット作成</a><a href="/compare">フィットの比較</a></div></details>
+    <details class="nav-group"><summary>お金</summary><div class="nav-menu"><a href="/market">マーケット</a><a href="/wallet">お金</a><a href="/assets">資産</a><a href="/appraise">査定</a><a href="/trade">ステーション内トレード</a><a href="/haul">ハブ間の転売</a><a href="/nes">PLEX とストア</a><a href="/lp">LP の換金</a></div></details>
+    <details class="nav-group"><summary>生産</summary><div class="nav-menu"><a href="/industry">生産</a><a href="/pi">PI（惑星開発）</a></div></details>
+    <details class="nav-group"><summary aria-current="page">移動・情報</summary><div class="nav-menu"><a href="/travel">移動</a><a href="/dist">流通ミッション</a><a href="/missions" aria-current="page">ミッション（敵の属性）</a><a href="/wormhole">ワームホール</a><a href="/signals">シグネチャ・星系</a><a href="/intel">情報（ローカル・D-Scan・撃墜）</a></div></details>
+  </div></nav>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>ミッション</h1>
+        <p class="muted">ミッションの説明と、出てくる敵の勢力が撃ってくる属性・弱い属性（ゲームのデータから計算）</p>
+      </div>
+    </header>
+    <div id="toasts" aria-live="polite"></div>
+
+    <section class="card">
+      <div class="ind-form">
+        <label>ミッション名<input type="search" id="ms-q" placeholder="例: The Blockade / 通行妨害（どの言語でも）" autocomplete="off"></label>
+      </div>
+      <p class="muted small-note">受けているミッションは ESI で取得できないので、名前で探してください。ゲームのミッションの画面で名前をコピーして貼り付けられます。
+        敵の勢力は、ミッションの名前と説明文に出てくる勢力から推定しています。説明文に書かれていないときは、ゲームのミッションの目的（Objectives）の画面で確かめて、下の一覧から選んでください。</p>
+      <div id="ms-results"></div>
+    </section>
+
+    <section>
+      <div class="section-head"><h2>⚔ 敵の勢力ごとの属性</h2>
+        <label class="muted">艦の大きさ <select id="ms-size">
+          <option value="all">すべて</option>
+          <option value="small">フリゲート・駆逐艦（レベル 1〜2 向け）</option>
+          <option value="medium">巡洋艦・巡洋戦艦（レベル 2〜3 向け）</option>
+          <option value="large">戦艦（レベル 3〜4 向け）</option>
+        </select></label></div>
+      <p class="muted small-note">「撃ってくる属性」は NPC の砲・ミサイルの DPS の割合、「弱い属性」は NPC のシールド・アーマー・ストラクチャーの耐性を HP で重み付けした、受けるダメージの割合です（100% = 耐性なし）。ミッション・デッドスペース・アステロイドベルトに出る NPC から計算しています（オフィサーなどは除く）。</p>
+      <div id="ms-factions" class="faction-grid"><p class="muted">読み込み中…</p></div>
+    </section>
+  </div>
+  <script src="/static/common.js"></script>
+  <script src="/static/missions.js"></script>
+</body>
+</html>

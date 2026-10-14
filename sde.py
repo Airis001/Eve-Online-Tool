@@ -4,12 +4,15 @@
   - PI（惑星開発）のレシピと、惑星の種類ごとの資源（P0）
   - 上記に出てくるアイテムの日本語名・英語名
   - 公開されている全アイテムの、日本語・英語以外の名前（画面の言語に合わせて名前を出すため）
+  - 敵（NPC）の勢力ごとの与ダメージの属性・弱点（ミッションのページ用）
+  - 戦闘ミッションの名前と説明文（各言語）。大きいので別のファイル（sde_missions.json）に分け、使うときに読む
 
 SDE は約 100MB の zip なので、初回（または更新ボタン）のときだけダウンロードし、必要な部分を取り出したら消す。
 """
 
 import io
 import json
+import re
 import threading
 import time
 import zipfile
@@ -20,15 +23,32 @@ from i18n import tr
 from paths import DATA_DIR
 
 DATA_FILE = DATA_DIR / "sde_data.json"
+MISSIONS_FILE = DATA_DIR / "sde_missions.json"
 TMP_ZIP = DATA_DIR / ".sde_download.zip"
 SDE_URL = "https://developers.eveonline.com/static-data/eve-online-static-data-latest-jsonl.zip"
-DATA_VERSION = 8  # 6: ゲート（星系のつながりと位置）、7: エージェント・ステーションの星系・NPC コーポの名前、8: ほかの言語の名前
+DATA_VERSION = 9  # 6: ゲート（星系のつながりと位置）、7: エージェント・ステーションの星系・NPC コーポの名前、8: ほかの言語の名前、
+                  # 9: 敵の勢力ごとの与ダメージ・弱点と、戦闘ミッション
 # 日本語・英語のほかに名前を取り出す言語（SDE の name のキー）
 LOC_LANGS = ("de", "fr", "es", "ru", "ko", "zh")
 # 残すエージェント: 部門（流通・採掘・セキュリティ）と種類（ふつうのエージェント・CONCORD）
 AGENT_DIVISIONS = {22: "distribution", 23: "mining", 24: "security"}
 AGENT_TYPES = {2, 5}
 OLDEST_USABLE = 5  # これ以降の版は、作り直すまでのあいだそのまま使う
+
+# 敵（NPC）のグループ名に含まれる言葉 → 勢力。ミッション・デッドスペース・アステロイドベルトの NPC を勢力ごとにまとめる
+NPC_FACTIONS = [("Guristas", 500010), ("Serpentis", 500020), ("Angel Cartel", 500011), ("Blood Raider", 500012),
+                ("Sansha", 500019), ("Rogue Drone", 500025), ("Mordu", 500018), ("Amarr Empire", 500003),
+                ("Caldari State", 500001), ("Gallente Federation", 500004), ("Minmatar Republic", 500002),
+                ("Khanid", 500008), ("Thukker", 500015), ("CONCORD", 500006)]
+NPC_PREFIXES = ("Mission ", "Deadspace ", "Asteroid ")
+NPC_SKIP = ("Officer", "Titan", "Dreadnought", "Carrier", "Supercarrier", "Hauler", "Other", "Container")
+NPC_SIZES = [("small", ("Frigate", "Destroyer", "Swarm")), ("medium", ("Cruiser", "BattleCruiser", "Battlecruiser")),
+             ("large", ("Battleship",))]
+DAMAGE_TYPES = ("em", "thermal", "kinetic", "explosive")  # EVE の並び: EM・熱・キネティック・爆発
+TURRET_EFFECT, MISSILE_EFFECT = 10, 569  # targetAttack（タレット）・missileLaunchingForEntity（ミサイル）。無い NPC の値は使わない
+MISSION_LANGS = ("ja", "en", *LOC_LANGS)
+_TAG = re.compile(r"<[^>]+>")
+_PLACEHOLDER = re.compile(r"\{\[[^\]]*\][^}]*\}")  # {[location]dungeonLocationID.name} など、ゲームが埋める部分
 
 # 惑星の種類 → 採れる資源（P0）。ESI の planet_type と同じ名前
 PLANET_RESOURCES = {
@@ -89,6 +109,10 @@ class SdeData:
         self.corp_names = {int(k): v for k, v in raw.get("corp_names", {}).items()}
         # ほかの言語の名前 {言語: {type_id: 名前}}（古い版には無い）
         self.loc_names = {lang: {int(k): v for k, v in names.items()} for lang, names in raw.get("loc_names", {}).items()}
+        # 敵の勢力 {勢力 ID: {"all"|"small"|"medium"|"large": {"dealt", "taken", "layers", "count"}}}（古い版には無い）
+        self.npc_profiles = {int(k): v for k, v in raw.get("npc_profiles", {}).items()}
+        self.faction_names = {int(k): v for k, v in raw.get("faction_names", {}).items()}
+        self._missions = None
         self.outdated = raw.get("version") != DATA_VERSION
         self.status = {"state": "ready", "progress": 100, "error": None, "build": raw.get("build"),
                        "release": raw.get("release")}
@@ -98,6 +122,17 @@ class SdeData:
     @property
     def ready(self):
         return self.data is not None
+
+    def missions(self):
+        """戦闘ミッション {"missions": [...], "texts": [...]}（初めて使うときに読む。無ければ None）。"""
+        if self._missions is None and self.data:
+            try:
+                raw = json.loads(MISSIONS_FILE.read_text(encoding="utf-8"))
+                if raw.get("version") == self.data.get("version"):
+                    self._missions = raw
+            except (FileNotFoundError, json.JSONDecodeError):
+                pass
+        return self._missions
 
     def localized(self, type_id, language):
         """日本語・英語以外の言語の名前（分からなければ None）。"""
@@ -118,6 +153,8 @@ class SdeData:
     def _build_safe(self):
         try:
             raw = self._build()
+            missions = raw.pop("missions")
+            MISSIONS_FILE.write_text(json.dumps(missions, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
             self.path.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
             self._load(raw)
         except Exception as e:  # noqa: BLE001 - 失敗は画面に出す
@@ -218,6 +255,12 @@ class SdeData:
         used_corps = {a[5] for a in agents.values()}
         corp_names = {c["_key"]: [c["name"].get("en"), c["name"].get("ja")] for c in corps if c["_key"] in used_corps}
         stations = {st["_key"]: st["solarSystemID"] for st in rows("npcStations.jsonl")}
+        npc_profiles = _npc_profiles(rows)
+        factions = {f["_key"]: f["name"] for f in rows("factions.jsonl")}
+        faction_names = {f: [factions[f].get(lang) or factions[f].get("en") for lang in MISSION_LANGS]
+                         for f in {*npc_profiles, *(f for _, f in NPC_FACTIONS)} if f in factions}
+        missions = _missions(rows)
+        missions["version"] = DATA_VERSION
         regions = {r["_key"]: [r["name"].get("en"), r["name"].get("ja"), r.get("wormholeClassID")] for r in rows("mapRegions.jsonl")}
         systems = {s["_key"]: [s["name"].get("en"), s["name"].get("ja"), round(s.get("securityStatus", 0.0), 4), s.get("regionID"),
                                s.get("wormholeClassID") or regions.get(s.get("regionID"), [None, None, None])[2]]
@@ -251,4 +294,101 @@ class SdeData:
             "systems": systems, "regions": regions, "variants": variants, "gates": gates,
             "agents": agents, "stations": stations, "corp_names": corp_names, "loc_names": loc_names,
             "planet_resources": {k: [by_en[n] for n in v] for k, v in PLANET_RESOURCES.items()},
+            "npc_profiles": npc_profiles, "faction_names": faction_names, "faction_langs": list(MISSION_LANGS),
+            "missions": missions,
         }
+
+
+def _npc_profiles(rows):
+    """敵の勢力ごと（と艦の大きさごと）の与ダメージの割合・受けるダメージの割合（弱点）・HP の層の割合。
+
+    与ダメージ: タレット（ダメージ × 倍率 ÷ 発射間隔）とミサイル（ミサイルのダメージ × 倍率 ÷ 発射間隔）の DPS を足す。
+    受けるダメージ: シールド・アーマー・ストラクチャーの耐性を、それぞれの HP で重み付けした平均（1 = 耐性 0%）。
+    """
+    groups = {}
+    for g in rows("groups.jsonl"):
+        n = g["name"]["en"]
+        if g["categoryID"] != 11 or not n.startswith(NPC_PREFIXES) or any(w in n for w in NPC_SKIP):
+            continue
+        faction = next((f for word, f in NPC_FACTIONS if word in n), None)
+        size = next((s for s, words in NPC_SIZES if n.endswith(words)), None)
+        if faction and size:
+            groups[g["_key"]] = (faction, size)
+    npc = {t["_key"]: groups[t["groupID"]] for t in rows("types.jsonl") if t.get("groupID") in groups}
+    wanted = {"emDamage", "thermalDamage", "kineticDamage", "explosiveDamage", "damageMultiplier", "speed",
+              "missileDamageMultiplier", "missileLaunchDuration", "entityMissileTypeID", "shieldCapacity", "armorHP", "hp"}
+    for d in DAMAGE_TYPES:
+        wanted |= {f"shield{d.capitalize()}DamageResonance", f"armor{d.capitalize()}DamageResonance", f"{d}DamageResonance"}
+    attr_ids = {a["_key"]: a["name"] for a in rows("dogmaAttributes.jsonl") if a["name"] in wanted}
+
+    def attrs(d):
+        return {attr_ids[x["attributeID"]]: x["value"] for x in d.get("dogmaAttributes", []) if x["attributeID"] in attr_ids}
+    dogma, missile_ids = {}, set()
+    for d in rows("typeDogma.jsonl"):
+        if d["_key"] in npc:
+            a = attrs(d)
+            effects = {e["effectID"] for e in d.get("dogmaEffects", [])}
+            a["turret"], a["missile"] = TURRET_EFFECT in effects, MISSILE_EFFECT in effects
+            dogma[d["_key"]] = a
+            if a["missile"] and a.get("entityMissileTypeID"):
+                missile_ids.add(int(a["entityMissileTypeID"]))
+    missiles = {}
+    for d in rows("typeDogma.jsonl"):
+        if d["_key"] in missile_ids:
+            a = attrs(d)
+            missiles[d["_key"]] = [a.get(f"{k}Damage", 0) for k in DAMAGE_TYPES]
+
+    sums = {}
+    for t, (faction, size) in npc.items():
+        a = dogma.get(t)
+        hp = [a.get("shieldCapacity", 0), a.get("armorHP", 0), a.get("hp", 0)] if a else [0, 0, 0]
+        if sum(hp) <= 0:
+            continue
+        dps = [0.0] * 4
+        if a["turret"] and a.get("damageMultiplier") and a.get("speed"):
+            for i, k in enumerate(DAMAGE_TYPES):
+                dps[i] += a.get(f"{k}Damage", 0) * a["damageMultiplier"] / (a["speed"] / 1000)
+        m = missiles.get(int(a.get("entityMissileTypeID") or 0))
+        if a["missile"] and m and a.get("missileLaunchDuration"):
+            for i in range(4):
+                dps[i] += m[i] * a.get("missileDamageMultiplier", 1) / (a["missileLaunchDuration"] / 1000)
+        taken = [sum(h * r for h, r in zip(hp, (a.get(f"shield{k.capitalize()}DamageResonance", 1),
+                                                 a.get(f"armor{k.capitalize()}DamageResonance", 1),
+                                                 a.get(f"{k}DamageResonance", 1)))) for k in DAMAGE_TYPES]
+        for key in ((faction, "all"), (faction, size)):
+            e = sums.setdefault(key, {"dps": [0.0] * 4, "taken": [0.0] * 4, "hp": [0.0] * 3, "count": 0})
+            e["dps"] = [x + y for x, y in zip(e["dps"], dps)]
+            e["taken"] = [x + y for x, y in zip(e["taken"], taken)]
+            e["hp"] = [x + y for x, y in zip(e["hp"], hp)]
+            e["count"] += 1
+    profiles = {}
+    for (faction, size), e in sums.items():
+        total_dps, total_hp = sum(e["dps"]), sum(e["hp"])
+        profiles.setdefault(faction, {})[size] = {
+            "dealt": [round(x / total_dps, 3) for x in e["dps"]] if total_dps else None,
+            "taken": [round(x / total_hp, 3) for x in e["taken"]],
+            "layers": [round(x / total_hp, 3) for x in e["hp"]],
+            "count": e["count"],
+        }
+    return profiles
+
+
+def _missions(rows):
+    """戦闘ミッション: [{"id", "name": {言語: 名前}, "faction", "brief": {言語: 説明文の番号}}] と説明文の一覧（同じ文は 1 つ）。"""
+    texts, ids = [], {}
+
+    def text_id(s):
+        s = _PLACEHOLDER.sub("…", _TAG.sub("", s or "")).strip()
+        if s not in ids:
+            ids[s] = len(texts)
+            texts.append(s)
+        return ids[s]
+    missions = []
+    for m in rows("missions.jsonl"):
+        if not m.get("killMission"):
+            continue
+        brief = next((x for x in m.get("messages", []) if x.get("_key") == "messages.mission.briefing"), {})
+        missions.append({"id": m["_key"], "name": {lang: m["name"][lang] for lang in MISSION_LANGS if m["name"].get(lang)},
+                         "faction": m.get("factionID"),
+                         "brief": {lang: text_id(brief[lang]) for lang in MISSION_LANGS if brief.get(lang)}})
+    return {"missions": missions, "texts": texts}

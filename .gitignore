@@ -26,6 +26,7 @@ structure_names.json
 market_watchlist.json
 wormhole_cache.json
 sde_data.json
+sde_missions.json
 .sde_download.zip
 pi_layouts.json
 sig_log.json

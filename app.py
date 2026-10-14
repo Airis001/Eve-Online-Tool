@@ -573,7 +573,7 @@ def home():
 
 # 機能のページ
 for _page in ("skills", "market", "recommend", "ships", "wormhole",
-              "wallet", "industry", "pi", "travel", "fitting", "skilllist", "pve", "pvp", "signals", "assets", "appraise", "remap", "trade", "intel", "compare", "nes", "haul", "dist", "lp"):
+              "wallet", "industry", "pi", "travel", "fitting", "skilllist", "pve", "pvp", "signals", "assets", "appraise", "remap", "trade", "intel", "compare", "nes", "haul", "dist", "lp", "missions"):
     app.add_url_rule(f"/{_page}", f"{_page}_page", lambda _p=_page: page(_p))
 
 

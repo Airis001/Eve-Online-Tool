@@ -13,7 +13,7 @@ It's a web app that runs in your browser — on your own PC, as a desktop app (.
 | Fits | Recommended fits and ships, PvE / PvP fits, fitting tool (PG, CPU and DPS estimates), fit comparison |
 | ISK | Market, wallet, assets, appraisal, station trading, hub hauling, PLEX & store, LP cash-out (ISK/LP and volume) |
 | Industry | Manufacturing and reactions, PI (planetary industry) totals and layout planning |
-| Travel & intel | Safe routes and autopilot time, distribution missions, wormholes, signatures, local / D-Scan / kills |
+| Travel & intel | Safe routes and autopilot time, distribution missions, mission enemy damage types and weaknesses, wormholes, signatures, local / D-Scan / kills |
 
 Add several characters and check them all together.
 

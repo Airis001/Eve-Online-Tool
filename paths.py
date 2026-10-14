@@ -23,11 +23,11 @@ DATA_DIR = Path(os.environ.get("EVE_DATA_DIR") or _default_data)
 # （.exe には個人のデータは入れず、キャッシュだけを入れる）
 SEED_FILES = ["skill_cache.json", "type_cache.json", "item_catalog.json", "targets.json", "groups.json",
               "saved_fits.json", "fitting_cache.json", "structure_names.json", "market_watchlist.json",
-              "wormhole_cache.json", "sde_data.json", "pi_layouts.json", "sig_log.json", "nes_offers.json",
+              "wormhole_cache.json", "sde_data.json", "sde_missions.json", "pi_layouts.json", "sig_log.json", "nes_offers.json",
               "character_skills.json", "gate_checks.json"]
 
 # 版のあるキャッシュ: 一緒に配ったものの版が新しければ置き換える（.exe の更新で、作り直しを待たずに使えるように）
-VERSIONED_FILES = ["sde_data.json"]
+VERSIONED_FILES = ["sde_data.json", "sde_missions.json"]
 
 
 def _version(path):

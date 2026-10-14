@@ -673,3 +673,22 @@ ol.queue .q-right { display: flex; gap: 12px; white-space: nowrap; }
 #ds-reroute h3 { margin: 0 0 4px; }
 .ds-agents td:nth-child(5) { width: 110px; }
 .ds-agents td:last-child { width: 50px; text-align: center; }
+
+/* ミッション: 敵の勢力の与ダメージ・弱点（属性の色はゲームと同じ: EM 青・熱 赤・キネティック 灰・爆発 橙） */
+.faction-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
+.faction-card { display: grid; gap: 8px; align-content: start; }
+.faction-card.highlight { outline: 2px solid var(--accent); }
+.faction-card h3 { margin: 0; }
+.dmg-row { display: grid; grid-template-columns: 6.5em minmax(0, 1fr) 3.2em; gap: 8px; align-items: center; font-size: 13px; }
+.dmg-row .num { text-align: right; }
+.dmg-track { height: 10px; border-radius: 5px; background: var(--surface-2); overflow: hidden; }
+.dmg-track span { display: block; height: 100%; }
+.dmg-em { background: #4a8fd9; }
+.dmg-thermal { background: #d9534a; }
+.dmg-kinetic { background: #9aa3ad; }
+.dmg-explosive { background: #e0a33a; }
+.dmg-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: 0; }
+.mission-result { display: grid; gap: 8px; }
+.mission-variant { border-top: 1px solid var(--border); padding-top: 8px; display: grid; gap: 6px; }
+.mission-variant .brief { white-space: pre-line; font-size: 13px; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }

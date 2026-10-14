@@ -13,7 +13,7 @@ Es una aplicación web que se abre en el navegador: en tu propio PC, como aplica
 | Fits | Fits y naves recomendados, fits PvE / PvP, herramienta de equipamiento (estimaciones de PG, CPU y DPS), comparación de fits |
 | ISK | Mercado, cartera, bienes, tasación, comercio en estación, transporte entre hubs, PLEX y tienda, canje de LP (ISK/LP y volumen) |
 | Industria | Fabricación y reacciones, PI (industria planetaria): totales y planificación de distribuciones |
-| Viaje e inteligencia | Rutas seguras y tiempo de piloto automático, misiones de distribución, agujeros de gusano, firmas, local / D-Scan / destrucciones |
+| Viaje e inteligencia | Rutas seguras y tiempo de piloto automático, misiones de distribución, daño y debilidades de los enemigos de misión, agujeros de gusano, firmas, local / D-Scan / destrucciones |
 
 Añade varios personajes y revísalos juntos.
 

@@ -13,7 +13,7 @@ C'est une application web qui s'ouvre dans le navigateur — sur votre PC, en ap
 | Fits | Fits et vaisseaux recommandés, fits PvE / PvP, outil d'équipement (estimations PG, CPU et DPS), comparaison de fits |
 | ISK | Marché, portefeuille, actifs, estimation, commerce en station, transport entre hubs, PLEX et boutique, conversion des LP (ISK/LP et volume) |
 | Industrie | Fabrication et réactions, PI (industrie planétaire) : totaux et planification des dispositions |
-| Voyage et renseignements | Routes sûres et temps de pilote automatique, missions de distribution, trous de ver, signatures, local / D-Scan / destructions |
+| Voyage et renseignements | Routes sûres et temps de pilote automatique, missions de distribution, dégâts et faiblesses des ennemis de mission, trous de ver, signatures, local / D-Scan / destructions |
 
 Ajoutez plusieurs personnages et consultez-les ensemble.
 
